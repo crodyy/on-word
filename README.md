@@ -3,15 +3,20 @@
 A forum where 1 verified human equals 1 locked wallet. Posts and comments live on
 Arkiv (Rabdi testnet) with paid lifetimes. Web3 hidden behind a Web2-feel UI.
 
+Posts offer 1-hour, 1-day, 3-day, and 5-day lifetimes (the 1-hour option
+exists for expiry testing). The feed shows a 180-character body excerpt under
+each title; the full body lives on the thread view. Comments are fixed at 1 day.
+
 ## Status
 
-V1 is feature-complete and closed. All builds green: `vitest run` 61/61,
+V1 is feature-complete and closed. All builds green: `vitest run` 64/64,
 `npx tsc --noEmit` clean, `npm run build` passes. Write auth and signup are
 wallet-signature bound (run-2 HIGHs fixed, T-021 through T-023).
 
 What was proven live on Rabdi: chain connectivity plus funded sponsor, schema
-writes with transaction receipts (1-day post, 7-day comment with exact 302402-block
-expiry), the allowlist feed hiding an unregistered-author entity, and every
+writes with transaction receipts (1-day post; comment probe with an exact
+302402-block expiry made when the fixed comment expiry was 7 days, now 1 day),
+the allowlist feed hiding an unregistered-author entity, and every
 403/404 path for posts, comments, extend, and edit with zero unintended chain writes.
 
 What was not proven live: the World ID simulator round-trip (signup with 409s on
@@ -42,6 +47,9 @@ setup plus a simulator pass.
   unbound ones (signup needs it). Issuance grants nothing without the key.
 - Single server instance. The registry, rate-limit, and nonce stores are files
   with per-path serialized writes; they are not shared across instances.
+- The feed cache (`data/cache.json`) is versioned. A version bump (v3 added
+  excerpts) resets it once; archived items repopulate from the chain on the
+  next load.
 - Staging simulator only. No mainnet, no mobile native, no recovery flow.
 
 ## V2

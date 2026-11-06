@@ -21,7 +21,7 @@ Before reading tasks or writing any file, the Orchestrator installs and verifies
 - If a subagent session does not show Superpowers active, install it for that session before it takes a task.
 
 **2. Taste Skill** (https://www.tasteskill.dev/docs). Only the Frontend agent uses it, but the Orchestrator installs it.
-- `npx skills add Leonxlnx/taste-skill` (installs `design-taste-frontend`). The Taste Skill docs do not list Hermes by name, so after installing, confirm Hermes can load `design-taste-frontend`. If it cannot, clone https://github.com/Leonxlnx/taste-skill and place the `design-taste-frontend` folder where Hermes reads skills, then log the path used.
+- `npx skills add https://github.com/Leonxlnx/taste-skill --skill "design-taste-frontend"` (installs `design-taste-frontend`; note the org is `Leonxlnx` with trailing x). The Taste Skill docs do not list Hermes by name, so after installing, confirm Hermes can load `design-taste-frontend` (it reads `skill_view`). If it cannot, clone https://github.com/Leonxlnx/taste-skill and place the `design-taste-frontend` folder where Hermes reads skills, then log the path used.
 - Requires Node 22+ and Chrome, Edge or Chromium for the inspector. Network is needed for finding pictures.
 
 **How Superpowers maps onto this manual (all agents):**

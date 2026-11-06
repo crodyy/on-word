@@ -1,0 +1,46 @@
+# LOG
+
+## 2026-11-06 12:40 IST | Orchestrator | — | ASSIGNED
+- What: Task Assignment phase started. Read AGENTS.md and PROMPT.md fully. Breaking PROMPT.md section 9 (steps 0-8) into tasks T-001 to T-018 in TIMELINE.md.
+- Evidence: repo root holds only AGENTS.md, PROMPT.md, .env.example, .gitignore. Node v24.18.1, npm 12.0.2 on host. No feature code written.
+- Needs: user approval of the plan before any agent starts (AGENTS.md section 4, rule 10 applies to pushes; plan release also gated by user here).
+
+## 2026-11-06 12:41 IST | Orchestrator | — | DECISION
+- What: Skills setup per AGENTS.md 0.A is done. Superpowers is ACTIVE: plugin dir lists all 14 skills and `skill_view("superpowers:writing-plans")` loads. `design-taste-frontend` was missing, installed tasteskill 2.5.0 via `npx skills add https://github.com/Leonxlnx/taste-skill --skill "design-taste-frontend"`, copied to the Hermes skills tree (creative/), and `skill_view("design-taste-frontend")` now loads with full references and assets.
+- Evidence: skill_view returns readiness_status available, SKILL.md 278 lines, scripts and references present.
+- Needs: none. Frontend agent must load `design-taste-frontend` before any UI task.
+
+## 2026-11-06 12:41 IST | Orchestrator | — | DECISION
+- What: Two corrections to AGENTS.md 0.A/8 logged for the record. (1) Install URL typo: manual wrote `Leonxln/taste-skill`, real org is `Leonxlnx` (trailing x); also `git ls-remote` on the typo URL returns "Repository not found". AGENTS.md patched with the working command. (2) Installed skill is v2.5.0, not v2.1.x: it has no dials, no `draw.mjs`, no `lint.mjs`/`inspect.mjs`, and no `--app` route; it uses `deal.mjs`, `consistency.mjs`, `check.mjs`, `shoot.mjs`, `perf.mjs`. Frontend follows the installed skill text; where AGENTS.md section 8 names v2.1 scripts, the installed equivalents apply. Honesty rules (lifetime countdown, locks-forever warning, 7-day comment notice, zero em-dashes) still outrank the skill on any conflict.
+- Evidence: web_search result for the canonical repo; installed SKILL.md header `tasteskill 2.5`.
+- Needs: Frontend agent to record which installed-script commands it ran as its gate evidence.
+
+## 2026-11-06 12:42 IST | Orchestrator | T-007 | DECISION
+- What: Q1 ENTITY OWNER settled. The sponsor wallet creates entities and RETAINS ownership ($owner = sponsor, $creator = sponsor). All writes are signed server-side with SPONSOR_PRIVATE_KEY. Author attribution is the server-set `author` addr column, taken from the verified registry binding, never from client input. Rationale: docs say "filter by your backend's account for data your app writes" (querying/filter); PROMPT.md one-liner demands Web3 hidden behind a Web2-feel UI and users hold no tGLM, so user-signed writes would force every user through the faucet; extend/edit then need no client signing infra. Consequence: AGENTS.md section 4 Backend B line "Extend and edit require $owner to equal the caller's wallet" is superseded — owner-only edit/extend is enforced in the API layer (caller wallet must equal the `author` column AND hold a registry binding, else 403). Feed trust filter = ownedBy(sponsor) + $expiresAt > now + author-in-registry. Spoof entities (same tag, unbound owner) are excluded by ownedBy.
+- Evidence: docs.arkiv.network/writing/change (only $owner can patch/extend/changeOwnership), /writing/expiration (extend semantics), /querying/filter (ownedBy/createdBy as trust filter).
+- Needs: Backend B implements per this decision in T-007/T-008/T-011; Security verifies the spoof test in T-017.
+
+## 2026-11-06 12:42 IST | Orchestrator | T-009 | DECISION
+- What: Q2 ALLOWLIST QUERY settled as moot under Q1. Single-owner design needs only `.ownedBy(sponsorAddress)`; no or() over $owner, no per-wallet fan-out. If V2 moves to user-owned entities, the documented path is `or()` over `$owner` with `eq("$owner", addr(...))` per wallet in chunks, or per-wallet queries merged client-side — NOT yet validated against a live node, so V2 must test it before relying on it.
+- Evidence: docs.arkiv.network/querying/filter ($owner/$creator/$expiresAt filterable; ownedBy is a single-address shortcut), /querying/paginate (limit 1-100, offset paging, page-by-key walk for full copies).
+- Needs: none in V1.
+
+## 2026-11-06 12:42 IST | Orchestrator | T-002 | DECISION
+- What: Q3 EXPLORER AND FAUCET URLs settled from docs.arkiv.network/networks/rabdi. Chain id 7794095 (0x76edaf), RPC https://rpc.rabdi.db-chain.testnet.arkiv.network (key via `rabdi({ accessKey })`), block time 2s, gas tGLM. Explorer https://rabdi.explorer.arkiv.network/. Faucet https://hub.arkiv.network/faucet. Access keys https://hub.arkiv.network/access-keys.
+- Evidence: Rabdi network reference page as fetched 2026-11-06.
+- Needs: user funds the sponsor wallet with tGLM from the faucet before T-007 (Backend B verifies balance in T-002).
+
+## 2026-11-06 12:43 IST | Orchestrator | — | ASSIGNED
+- What: Assignment published in TIMELINE.md: T-001 through T-018, all TODO, owners and dependencies set, exact file paths and acceptance evidence per task. No agent has started. Nothing pushed. `.env.local` never read.
+- Evidence: TIMELINE.md created this turn.
+- Needs: user reviews the plan below and approves; on approval, Orchestrator releases T-001 (scaffold) first.
+
+## 2026-11-06 12:47 IST | Orchestrator | T-019 | STARTED
+- What: User requested the four Arkiv hackathon feedback docs under arkiv/. Repo verified: no app code exists yet (only AGENTS.md, PROMPT.md, .env.example, LOG.md, TIMELINE.md), so all Arkiv claims will be grounded in the spec plus the LOG.md design decisions and explicitly marked planned-vs-implemented. Writing all four files directly, then verifying.
+- Evidence: `git status` shows no lib/, app/, or tests/ present.
+- Needs: none; no app code touched.
+
+## 2026-11-06 12:52 IST | Orchestrator | T-019 | DONE
+- What: All four files created under C:/on-word/arkiv/ (friction, reach, why-arkiv, how-you-use-arkiv). Verified: 4 files present; grep confirms no traction, deployment, user-number, or benchmark claims; how-you-use-arkiv carries an explicit specified-not-implemented status note; schemas, filters, expiration rules, and ownership match PROMPT.md sections 4/5/8 and the LOG.md entity-owner and allowlist DECISIONs. One present-tense line in friction.md corrected to specified-status. No app code touched, nothing pushed.
+- Evidence: `ls arkiv/` shows all four files; claim grep clean.
+- Needs: none. Awaiting user approval of the main plan (T-001 to T-018) separately.

@@ -3,16 +3,16 @@
 Last updated: 2026-11-06 12:43 IST
 
 ## Summary
-Done: 4 | In progress: 0 | In review: 0 | Blocked: 0 | Todo: 15
+Done: 5 | In progress: 0 | In review: 0 | Blocked: 1 | Todo: 13
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
 |-------|-----------------------------------|------------|------------|--------|--------------------------------|---------|
 | T-001 | Scaffold Next.js 14 TS app + deps | Orchestrator | -        | DONE   | `npm run build` passes; package.json holds next@14, react, typescript, @worldcoin/idkit, @worldcoin/idkit-core, viem, @arkiv-network/sdk, vitest | 2026-11-06 |
 | T-002 | Rabdi connectivity + sponsor funding | Backend B | T-001     | DONE | chain 7794095 block 282519, sponsor balance 10 tGLM (check-rabdi.mjs; key normalized with 0x prefix) | 2026-11-06 |
-| T-003 | Registry lib TDD (UNIQUE nullifier/wallet) | Backend A | T-001 | DONE | `vitest run` green: tests/registry.test.ts covers duplicate-nullifier reject, duplicate-wallet reject, lowercase normalize, atomic check+insert | 2026-11-06 |
-| T-004 | Shared TS contracts (lib/types.ts) | Orchestrator | T-001 | TODO | `npx tsc --noEmit` passes; types match PROMPT.md section 8 exactly | 2026-11-06 |
-| T-005 | POST /api/rp-signature | Backend A | T-001 | TODO | curl with `{"action":"human-forum-register-v1"}` returns `{sig, nonce, created_at, expires_at}`; wrong action returns 400 bad-action | 2026-11-06 |
+| T-003 | Registry lib TDD (UNIQUE nullifier/wallet) | Backend A | T-001 | DONE | `vitest run` green 8/8; typecheck clean (identity sign-off stays with T-016, may reopen) | 2026-11-06 |
+| T-004 | Shared TS contracts (lib/types.ts) | Orchestrator | T-001 | DONE | `npx tsc --noEmit` clean; types mirror PROMPT.md section 8 (rp-signature, verify-proof, posts, feed, extend/edit, comments, ApiError) | 2026-11-06 |
+| T-005 | POST /api/rp-signature | Backend A | T-001 | BLOCKED | route written (signRequest server-side, snake_case, 400 bad-action verified by curl); correct action returns 500 because RP_SIGNING_KEY in .env.local is a 20-byte address, not the 32-byte signing key. User must paste the real signing key from the Developer Portal | 2026-11-06 |
 | T-006 | POST /api/verify-proof + binding | Backend A | T-003, T-005 | TODO | simulator signup x2: first 200 `{ok:true}`, second 409 worldid-reused; reused wallet 409 wallet-reused; files app/api/verify-proof/route.ts, lib/worldid/verify.ts | 2026-11-06 |
 | T-007 | Arkiv schemas + server write path | Backend B | T-001, T-002 | TODO | `createEntity(Posts, 1d)` on Rabdi returns entityKey + expiresAt; tx hash visible on https://rabdi.explorer.arkiv.network/; files lib/arkiv/schemas.ts, lib/arkiv/client.ts | 2026-11-06 |
 | T-008 | POST /api/posts + rate limit | Backend B | T-003, T-007 | TODO | bound-wallet curl returns entityKey; body over 5KB rejected; days outside {1,7,30} rejected; unbound wallet 403; files app/api/posts/route.ts, lib/arkiv/rateLimit.ts | 2026-11-06 |

@@ -109,3 +109,13 @@
 - What: T-003 passes its acceptance (vitest 8/8 green) and its own integration check (typecheck clean). Marking DONE so T-006 can proceed. Identity-layer sign-off stays with Security in T-016, which may reopen T-003 on findings.
 - Evidence: npx vitest run 8 passed; npx tsc --noEmit clean.
 - Needs: T-004 + T-005 next (both depend only on T-001).
+
+## 2026-11-06 13:40 IST | Orchestrator | T-004 | DONE
+- What: Wrote lib/types.ts mirroring PROMPT.md section 8 exactly (rp-signature, verify-proof, posts, feed, extend/edit, comments, ApiError). `npx tsc --noEmit` clean.
+- Evidence: typecheck output clean.
+- Needs: commit with T-005 route; push approval.
+
+## 2026-11-06 13:40 IST | Orchestrator | T-005 | BLOCKED
+- What: Wrote app/api/rp-signature/route.ts (server-side signRequest, snake_case response, 400 bad-action on action mismatch). Verified wrong action returns 400 bad-action by curl against production build. Correct action returns 500: direct signRequest probe throws "expected 32 bytes, got 20 bytes", so RP_SIGNING_KEY in .env.local is a 20-byte address, not the 32-byte signing key. Route code is correct; the env value is wrong. Also killed an orphan Next server holding port 3100 from the crashed session.
+- Evidence: curl wrong-action 400 bad-action; signRequest probe THREW invalid key; key probe len 42 with 0x (value never read).
+- Needs: user pastes the real 32-byte RP signing key (0x + 64 hex, shown once at RP creation in the Developer Portal) into .env.local as RP_SIGNING_KEY. Then re-run: build, start, curl good action expecting sig/nonce/created_at/expires_at.

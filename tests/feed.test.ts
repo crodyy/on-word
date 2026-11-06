@@ -6,6 +6,7 @@ import {
   decodeBodyCell,
   emptyCache,
   loadCache,
+  makeExcerpt,
   saveCache,
   splitFeed,
   upsertCache,
@@ -23,6 +24,7 @@ function post(over: Partial<ChainPost> = {}): ChainPost {
     author: "0xAuthor",
     postKey: "probe-1",
     title: "hello",
+    body: "hello world body",
     expiresAtBlock: CURRENT + BigInt(43200),
     ...over,
   };
@@ -103,20 +105,37 @@ describe("feed split", () => {
     }
   });
 
-  it("migrates a stale version-1 cache file to empty", async () => {
+  it("migrates stale pre-excerpt cache files to empty", async () => {
     const dir = mkdtempSync(join(tmpdir(), "cache-test-"));
     try {
       const path = join(dir, "cache.json");
       const { writeFile } = await import("node:fs/promises");
       await writeFile(
         path,
-        JSON.stringify({ version: 1, posts: [{ key: "0xold", title: "old", owner: "0xSponsor", postKey: "p", expiresAtBlock: "1" }] }),
+        JSON.stringify({ version: 2, posts: [{ key: "0xold", title: "old", owner: "0xAuthor", postKey: "p", expiresAtBlock: "1" }] }),
         "utf8",
       );
       expect(await loadCache(path)).toEqual(emptyCache());
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  it("exposes a truncated excerpt on live and archived posts", () => {
+    const long = post({ body: "w ".repeat(200) });
+    const { posts } = splitFeed([long], new Set(["0xauthor"]), CURRENT, new Map(), emptyCache());
+    expect(posts).toHaveLength(1);
+    expect(posts[0].excerpt).toBe(makeExcerpt(long.body));
+    expect(posts[0].excerpt.length).toBeLessThanOrEqual(183);
+    const cache = upsertCache(emptyCache(), [long]);
+    const after = splitFeed([], new Set(["0xauthor"]), CURRENT + BigInt(43201), new Map(), cache);
+    expect(after.archived).toHaveLength(1);
+    expect(after.archived[0].excerpt).toBe(makeExcerpt(long.body));
+  });
+
+  it("passes short bodies through as the excerpt", () => {
+    const { posts } = splitFeed([post({ body: "short body" })], new Set(["0xauthor"]), CURRENT, new Map(), emptyCache());
+    expect(posts[0].excerpt).toBe("short body");
   });
 });
 

@@ -18,17 +18,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreatePostRes
     title?: unknown;
     body?: unknown;
     days?: unknown;
+    hours?: unknown;
   } | null;
   if (
     !body ||
     typeof body.title !== "string" ||
     typeof body.body !== "string" ||
-    typeof body.days !== "number"
+    (typeof body.days !== "number" && typeof body.hours !== "number")
   ) {
     return NextResponse.json({ error: "bad-request" }, { status: 400 });
   }
   try {
-    validatePostInput({ title: body.title, body: body.body, days: body.days });
+    validatePostInput({ title: body.title, body: body.body, days: body.days as number | undefined, hours: body.hours as number | undefined });
   } catch {
     return NextResponse.json({ error: "bad-request" }, { status: 400 });
   }
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreatePostRes
       postKey,
       title: body.title,
       body: body.body,
-      days: body.days,
+      ...(typeof body.hours === "number" ? { hours: body.hours } : { days: body.days as number }),
     });
     return NextResponse.json({ entityKey: res.entityKey });
   } catch (err) {

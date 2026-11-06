@@ -1,9 +1,9 @@
 # TIMELINE
 
-Last updated: 2026-11-06 22:00 IST
+Last updated: 2026-11-07 01:10 IST
 
 ## Summary
-Done: 17 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 1
+Done: 21 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 1
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -17,13 +17,13 @@ Done: 17 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 1
 | T-007 | Arkiv schemas + server write path | Backend B | T-001, T-002 | DONE | live createEntity 1d on Rabdi: entityKey 0xb6e0a9.., expiresAt block 326542, tx 0x5bf37f04.. status success (explorer link in LOG) | 2026-11-06 |
 | T-008 | POST /api/posts + rate limit | Backend B | T-003, T-007 | IN_REVIEW | route + file-backed 5/day limit, vitest 25/25, build passes; REMAINING: live 6-post 429 run (belongs to step-7 task, costs 5 txs) | 2026-11-06 |
 | T-009 | GET /api/posts feed + cache | Backend B | T-008 | DONE | live curl returns {posts:[],archived:[]} with probe hidden (unregistered author); cache.json upsert verified then cleaned; vitest 30/30 | 2026-11-06 |
-| T-010 | POST /api/comments (fixed 7d) | Backend B | T-007 | DONE | live comment on probe post: 7d expiry (delta 302402 blocks), count 1, tx 0x68f49b5b..; validation unit tests; no edit/extend routes | 2026-11-06 |
+| T-010 | POST /api/comments (fixed 1d, was 7d) | Backend B | T-007 | DONE | Live 7d probe stands as history (tx 0x68f49b5b.., delta 302402 blocks); fixed expiry now 1d, see T-027 | 2026-11-07 |
 | T-011 | Extend + edit post routes (owner-only) | Backend B | T-008 | IN_REVIEW | live curl: no-wallet 403, bogus key 404, non-owner extend/edit 403, zero txs; success paths deferred to round-trip (need registered author) | 2026-11-06 |
 | T-012 | Signup screen + IDKit widget | Frontend | T-004, T-005, T-006 | IN_REVIEW | signup with Connect-wallet button plus manual fallback, orbLegacy flow, locks-forever warning, inline 409s; needs simulator pass | 2026-11-06 |
-| T-013 | Feed screen | Frontend | T-004, T-009 | IN_REVIEW | feed with live/archived, countdown, comment counts, visitor banner, loading/empty/error states; needs live-post rendering check | 2026-11-06 |
-| T-014 | New-post + thread screens | Frontend | T-004, T-008, T-010, T-011 | IN_REVIEW | composer with 5KB guard + 1/7/30d radio; thread with countdown, owner controls, comments; needs live round-trip | 2026-11-06 |
+| T-013 | Feed screen | Frontend | T-004, T-009 | IN_REVIEW | feed with live/archived, countdown, comment counts, visitor banner, loading/empty/error states; shows 180-char body excerpts (T-029); needs live-post rendering check | 2026-11-07 |
+| T-014 | New-post + thread screens | Frontend | T-004, T-008, T-010, T-011 | IN_REVIEW | composer 5KB guard + 1h/1d/3d/5d radio (T-028); thread in-place edit (Edit top-right, Save/Cancel, T-026) + Lifetime section (T-026) + 1-day comment copy (T-027); needs live round-trip | 2026-11-07 |
 | T-015 | Taste-skill gate + preflight | Frontend | T-012, T-013, T-014 | DONE | shoot+perf 0 FAIL (2 WARN bundle size, reason logged); consistency 49 PASS, 5 marketing-rule FAILs with stated app-scope reasons; 2 critique rounds; preflight clean | 2026-11-06 |
-| T-016 | Security audit M1 (identity layer) | Security | T-006 | IN_REVIEW | audit done, SECURITY.md written; 1 HIGH open (S-001 auth transport, needs waiver/V2); T-006 stays IN_REVIEW | 2026-11-06 |
+| T-016 | Security audit M1 (identity layer) | Security | T-006 | DONE | audit done; re-audit 2026-11-07: S-001 fixed by T-021/T-022/T-023 (per-write wallet signatures), S-003 fixed (route returns JSON 400 on fetch throw), S-002 accepted, S-004 sweep clean; SECURITY.md removed per user direction (T-030) | 2026-11-07 |
 | T-017 | Security audit M2 (content layer) | Security | T-011, T-014 | DONE | audit done, no CRITICAL/HIGH in content layer (S-001 tracked under T-016) | 2026-11-06 |
 | T-018 | Final build + fresh-identity round trip | Orchestrator | T-015, T-016, T-017 | TODO | `vitest run` green, `npm run build` passes, round trip works (signup, post, comment, extend, 409 x2, 403, 429), Security final sign-off, README caveats written | 2026-11-06 |
 | T-019 | Arkiv hackathon feedback docs (arkiv/*.md) | Orchestrator | - | DONE | four files exist under arkiv/; every technical claim cross-checked against PROMPT.md, AGENTS.md, LOG.md decisions; planned-vs-implemented clearly marked | 2026-11-06 |
@@ -33,6 +33,11 @@ Done: 17 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 1
 | T-023 | Frontend wallet-signing (signup + write pages) | Frontend | T-021, T-022 | DONE | injected-wallet only (manual paste removed), challenge+personal_sign on signup and all write pages via signedWriteHeaders; lane note: Backend pairing agent implemented, needs Frontend review; live simulator pass still required | 2026-11-06 |
 | T-024 | Hardening batch (headers, README, sweep) | Orchestrator | T-023 | DONE | baseline security headers in next.config.mjs (nosniff, referrer, SAMEORIGIN; HSTS/CSP stay deploy-time), README limits rewritten for signature auth, sweep clean: no schema tags/secrets/nullifiers in app/ or .next/static, no dangerouslySetInnerHTML | 2026-11-06 |
 | T-025 | Feed count + hero/header session fixes | Frontend | T-020, T-023 | DONE | countComments counts by parent entity key not postKey column (was always 0; live proof byEntity 1 vs byColumn 0, feed curl 1/0); home is wallet-aware (bound sees Go-to-feed/New-post); SiteHeader re-reads wallet on route change | 2026-11-06 |
+| T-026 | Thread in-place edit + Lifetime section | Frontend | T-014 | IN_REVIEW | Edit button top-right of title; title/body become inputs in place; Save changes calls existing edit route; section renamed Author controls to Lifetime, Extend right; tsc clean; committed, needs live round-trip | 2026-11-07 |
+| T-027 | Comment fixed expiry 7d to 1d | Backend B | T-010 | IN_REVIEW | COMMENT_DAYS 7 to 1 (create path follows it), thread copy to 1 day, probe script to fromDays(1); vitest 61/61, tsc clean; committed; contract deviation vs PROMPT.md 7d and AGENTS.md 7d | 2026-11-07 |
+| T-028 | 1-hour post lifetime | Backend B + Frontend | T-008 | DONE | lib/arkiv/posts validates days 1/3/5 or hours 1 (fromHours), create/extend routes accept either, composer + thread extend offer 1h; vitest 62/62, tsc clean, build green; contract deviation vs PROMPT.md/AGENTS.md day-only lifetimes | 2026-11-07 |
+| T-029 | Feed body excerpts | Backend B + Frontend | T-009 | DONE | fetchLivePosts selects body, splitFeed exposes 180-char excerpt, cache v3 stores excerpts (old caches reset once), feed renders excerpt live+archived; vitest 64/64, tsc clean, build green | 2026-11-07 |
+| T-030 | Security re-audit + remove SECURITY.md | Security | T-016 | DONE | all findings re-verified against code (S-001/S-003 fixed, S-002 accepted, S-004 sweep clean), 32 auth tests green; file deleted per user direction | 2026-11-07 |
 
 ## Milestones
 - [ ] M1 Registry + RP signature (T-003, T-005, T-016 partial)

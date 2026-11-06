@@ -21,7 +21,7 @@ export default function ThreadPage() {
   const [title, setTitle] = useState("");
   const [bodyText, setBodyText] = useState("");
   const [editing, setEditing] = useState(false);
-  const [extendDays, setExtendDays] = useState<1 | 3 | 5>(3);
+  const [extendLifetime, setExtendLifetime] = useState<{ days?: 1 | 3 | 5; hours?: 1 }>({ days: 3 });
 
   useEffect(() => {
     setWallet(getBoundWallet());
@@ -98,7 +98,7 @@ export default function ThreadPage() {
       const res = await fetch(`/api/posts/${key}/extend`, {
         method: "POST",
         headers: { "content-type": "application/json", ...(await signedWriteHeaders(wallet)) },
-        body: JSON.stringify({ days: extendDays }),
+        body: JSON.stringify(extendLifetime),
       });
       if (res.status === 403) throw new Error("Only the author can extend.");
       if (!res.ok) throw new Error("Could not extend.");
@@ -168,49 +168,79 @@ export default function ThreadPage() {
   return (
     <main className="py-10">
       <p className="text-sm"><Link href="/feed" className="underline">Feed</Link></p>
-      <h1 className="mt-2 text-3xl font-medium tracking-tight">{post.title}</h1>
+      <div className="mt-2 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          {editing ? (
+            <>
+              <label htmlFor="edit-title" className="block text-sm font-medium">Title</label>
+              <input
+                id="edit-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={200}
+                className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-3xl font-medium tracking-tight outline-none focus:border-[var(--color-ink)]"
+              />
+            </>
+          ) : (
+            <h1 className="text-3xl font-medium tracking-tight">{post.title}</h1>
+          )}
+        </div>
+        {isOwner ? (
+          <div className="flex shrink-0 items-center gap-2 pt-1">
+            {editing ? (
+              <>
+                <button onClick={() => setEditing(false)} disabled={busy} className="btn-press rounded-full border border-[var(--color-line)] px-4 py-1.5 text-sm font-semibold disabled:cursor-not-allowed">
+                  Cancel
+                </button>
+                <button onClick={submitEdit} disabled={busy} className="btn-press rounded-full bg-[var(--color-ink)] px-4 py-1.5 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed">
+                  {busy ? "Saving..." : "Save changes"}
+                </button>
+              </>
+            ) : (
+              <button onClick={() => { if (detail && !bodyText) setBodyText(detail.body); setEditing(true); }} className="btn-press inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] px-4 py-1.5 text-sm font-semibold">
+                <PencilSimple size={15} /> Edit
+              </button>
+            )}
+          </div>
+        ) : null}
+      </div>
       <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <span className="font-mono">{shortWallet(post.owner)}</span>
         <span className="inline-flex items-center gap-1"><Clock size={15} /> {countdownTo(post.expiresAt)}</span>
       </p>
 
-      {detail ? (
-        <p className="mt-4 whitespace-pre-wrap text-base leading-relaxed">{detail.body}</p>
-      ) : null}
+      {editing ? (
+        <div className="mt-4">
+          <label htmlFor="edit-body" className="block text-sm font-medium">Body</label>
+          <textarea id="edit-body" value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={6} className="mt-2 w-full whitespace-pre-wrap rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-base leading-relaxed outline-none focus:border-[var(--color-ink)]" />
+        </div>
+      ) : (
+        detail ? (
+          <p className="mt-4 whitespace-pre-wrap text-base leading-relaxed">{detail.body}</p>
+        ) : null
+      )}
 
       {isOwner ? (
-        <section className="mt-6 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-5" aria-label="Author controls">
-          <h2 className="text-sm font-semibold">Author controls</h2>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {[1, 3, 5].map((d) => (
+        <section className="mt-6 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-5" aria-label="Lifetime">
+          <h2 className="text-sm font-semibold">Lifetime</h2>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+            {[{ label: "+1h", value: { hours: 1 } }, { label: "+1d", value: { days: 1 } }, { label: "+3d", value: { days: 3 } }, { label: "+5d", value: { days: 5 } }].map((opt) => (
               <button
-                key={d}
+                key={opt.label}
                 type="button"
-                onClick={() => setExtendDays(d as 1 | 3 | 5)}
-                aria-pressed={extendDays === d}
-                className={`btn-press rounded-full border px-4 py-1.5 text-sm font-semibold ${extendDays === d ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-paper)]" : "border-[var(--color-line)]"}`}
+                onClick={() => setExtendLifetime(opt.value as { days?: 1 | 3 | 5; hours?: 1 })}
+                aria-pressed={JSON.stringify(extendLifetime) === JSON.stringify(opt.value)}
+                className={`btn-press rounded-full border px-4 py-1.5 text-sm font-semibold ${JSON.stringify(extendLifetime) === JSON.stringify(opt.value) ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-paper)]" : "border-[var(--color-line)]"}`}
               >
-                +{d}d
+                {opt.label}
               </button>
             ))}
-            <button onClick={submitExtend} disabled={busy} className="btn-press rounded-full bg-[var(--color-ink)] px-4 py-1.5 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed">
+            </div>
+            <button onClick={submitExtend} disabled={busy} className="btn-press ml-auto rounded-full bg-[var(--color-ink)] px-4 py-1.5 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed">
               Extend
             </button>
-            <button onClick={() => { if (!editing && detail && !bodyText) setBodyText(detail.body); setEditing((v) => !v); }} className="btn-press inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] px-4 py-1.5 text-sm font-semibold">
-              <PencilSimple size={15} /> {editing ? "Close editor" : "Edit"}
-            </button>
           </div>
-          {editing ? (
-            <div className="mt-4">
-              <label htmlFor="edit-title" className="block text-sm font-medium">Title</label>
-              <input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-ink)]" />
-              <label htmlFor="edit-body" className="mt-3 block text-sm font-medium">Body (optional)</label>
-              <textarea id="edit-body" value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={3} className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-ink)]" />
-              <button onClick={submitEdit} disabled={busy} className="btn-press mt-3 rounded-full bg-[var(--color-ink)] px-5 py-2 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed">
-                {busy ? "Saving..." : "Save changes"}
-              </button>
-            </div>
-          ) : null}
         </section>
       ) : null}
 
@@ -218,7 +248,7 @@ export default function ThreadPage() {
 
       <section className="mt-8" aria-label="Comments">
         <h2 className="text-lg font-medium">Comments ({comments.length})</h2>
-        <p className="mt-1 text-sm">Comments are fixed at 7 days and cannot be edited.</p>
+        <p className="mt-1 text-sm">Comments are fixed at 1 day and cannot be edited.</p>
         {comments.length === 0 ? (
           <p className="mt-3 text-sm">No comments yet.</p>
         ) : (

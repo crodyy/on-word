@@ -329,3 +329,23 @@
 - What: Post lifetime options changed from 1/7/30 to 1/3/5 per user direction. Updated the shared contract (lib/types.ts PostLifetimeDays), validation (lib/arkiv/posts.ts POST_LIFETIME_DAYS), new-post composer (DAYS + default 3), thread extend controls (type + default 3), feed empty-state copy, and tests (posting valid-day 5, manage-route extend day 3). Comments stay fixed at 7 days. AGENTS.md section 4 line 116 still says {1, 7, 30} (file is write-protected, needs Orchestrator edit); PROMPT.md spec sections still say 1/7/30, logged here as the contract deviation.
 - Evidence: tsc clean, vitest 61/61 across 10 files, `npm run build` green.
 - Needs: user approval to push (now 2 commits ahead: 320761d + this one).
+
+## 2026-11-07 01:05 IST | Backend B + Frontend | T-028 | DONE
+- What: 1-hour post lifetime per user request (expiry testing). lib/arkiv/posts validates days 1/3/5 or hours 1 via TDD (RED watched: hours:1 threw days-must-be; GREEN after). create/extend routes accept either field; composer and thread extend offer 1h; manage.extendPostEntity takes days or {hours:1}.
+- Evidence: vitest 62/62, tsc clean, build green. Contract deviation: PROMPT.md sections and AGENTS.md line 116 specify day-only lifetimes.
+- Needs: live 1h post to watch it archive; push approval.
+
+## 2026-11-07 01:05 IST | Backend B + Frontend | T-029 | DONE
+- What: Feed shows a 180-char body excerpt under each title (live + archived) per user request. fetchLivePosts selects/decodes body, splitFeed maps to excerpt via makeExcerpt, cache bumped v2 to v3 (old caches reset once), FeedPost contract gains excerpt.
+- Evidence: RED watched (excerpt undefined), GREEN after; vitest 64/64 (3 new excerpt tests), tsc clean, build green.
+- Needs: push approval.
+
+## 2026-11-07 01:08 IST | Security | T-030 | DONE
+- What: Re-audited every SECURITY.md finding against code per user request. S-001 fixed (all 4 write routes require fresh wallet signature, T-021/22/23), S-003 fixed (verify route catches all errors to JSON 400), S-002 accepted single-instance risk, S-004 re-scanned clean (no secrets/schema tags in .next/static, nullifier hits IDKit-only). Deleted SECURITY.md per user direction.
+- Evidence: 32 auth tests green across 5 files; bundle grep output clean.
+- Needs: push approval.
+
+## 2026-11-07 01:10 IST | Orchestrator | push | DECISION (push approved)
+- What: User said "commit and then update any md files if needed then push" covering T-026 through T-030 plus SECURITY.md deletion. TIMELINE board refreshed (T-016 DONE, T-028/29/30 DONE, counts Done:21/In review:8). Committing once, pushing to origin master.
+- Evidence: n/a (direction).
+- Needs: commit then push now.

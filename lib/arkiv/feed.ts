@@ -15,12 +15,14 @@ export interface ChainPost {
   author: string;
   postKey: string;
   title: string;
+  body: string;
   expiresAtBlock: bigint;
 }
 
 export interface FeedPost {
   key: string;
   title: string;
+  excerpt: string;
   owner: string;
   expiresAt: string;
   commentCount: number;
@@ -49,11 +51,22 @@ export function decodeBodyCell(raw: unknown): string {
   return new TextDecoder().decode(v as Uint8Array);
 }
 
+export const EXCERPT_CHARS = 180;
+
+// Short preview of the body for the feed. Plain truncation with an
+// ellipsis marker; the full body stays on the thread view.
+export function makeExcerpt(text: string, max: number = EXCERPT_CHARS): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length <= max) return flat;
+  return flat.slice(0, max).trimEnd() + "...";
+}
+
 export interface FeedCache {
-  version: 2;
+  version: 3;
   posts: {
     key: string;
     title: string;
+    excerpt: string;
     owner: string;
     postKey: string;
     expiresAtBlock: string;
@@ -61,15 +74,15 @@ export interface FeedCache {
 }
 
 export function emptyCache(): FeedCache {
-  return { version: 2, posts: [] };
+  return { version: 3, posts: [] };
 }
 
 export async function loadCache(path: string): Promise<FeedCache> {
   try {
     const parsed = JSON.parse(await readFile(path, "utf8")) as FeedCache;
-    // Version 1 cached $owner (the sponsor) as the display owner. Version 2
-    // stores the author instead. Drop stale caches rather than show wrong authors.
-    if (!parsed || parsed.version !== 2 || !Array.isArray(parsed.posts)) return emptyCache();
+    // Version 2 cached rows without excerpts. Drop stale caches rather
+    // than show posts with missing previews.
+    if (!parsed || parsed.version !== 3 || !Array.isArray(parsed.posts)) return emptyCache();
     return parsed;
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return emptyCache();
@@ -102,6 +115,7 @@ export function splitFeed(
     posts.push({
       key: p.key,
       title: p.title,
+      excerpt: makeExcerpt(p.body ?? ""),
       owner: p.owner,
       expiresAt: toISO(p.expiresAtBlock),
       commentCount: commentCounts.get(p.key) ?? 0,
@@ -119,6 +133,7 @@ export function splitFeed(
     archived.push({
       key: c.key,
       title: c.title,
+      excerpt: c.excerpt ?? "",
       owner: c.owner,
       expiresAt: toISO(BigInt(c.expiresAtBlock)),
       commentCount: 0,
@@ -137,6 +152,7 @@ export function upsertCache(cache: FeedCache, live: ChainPost[], allowlist?: Set
     seen.set(p.key, {
       key: p.key,
       title: p.title,
+      excerpt: makeExcerpt(p.body ?? ""),
       owner: p.owner,
       postKey: p.postKey,
       expiresAtBlock: p.expiresAtBlock.toString(),
@@ -148,7 +164,7 @@ export function upsertCache(cache: FeedCache, live: ChainPost[], allowlist?: Set
     if (allowlist && !allowlist.has(p.owner.toLowerCase())) return;
     out.push(p);
   });
-  return { version: 2, posts: out };
+  return { version: 3, posts: out };
 }
 
 function colVal(v: unknown): string {
@@ -163,7 +179,7 @@ export async function fetchLivePosts(sponsor: Hex): Promise<{ posts: ChainPost[]
   let offset = 0;
   for (;;) {
     const page = await publicClient
-      .select({ $key: true, $owner: true, $expiresAt: true, author: true, postKey: true, title: true })
+      .select({ $key: true, $owner: true, $expiresAt: true, author: true, postKey: true, title: true, body: true })
       .from(Posts)
       .ownedBy(sponsor)
       .orderBy(desc("postKey"))
@@ -182,6 +198,7 @@ export async function fetchLivePosts(sponsor: Hex): Promise<{ posts: ChainPost[]
         author,
         postKey: colVal(r.postKey),
         title: colVal(r.title),
+        body: decodeBodyCell(r.body),
         expiresAtBlock: BigInt(String(r.$expiresAt)),
       });
     }

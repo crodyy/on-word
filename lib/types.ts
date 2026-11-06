@@ -23,11 +23,13 @@ export interface VerifyProofSuccess {
 }
 
 export type PostLifetimeDays = 1 | 3 | 5;
+export type PostLifetimeHours = 1;
 
 export interface CreatePostRequest {
   title: string;
   body: string;
-  days: PostLifetimeDays;
+  days?: PostLifetimeDays;
+  hours?: PostLifetimeHours;
 }
 
 export interface CreatePostResponse {
@@ -37,6 +39,7 @@ export interface CreatePostResponse {
 export interface FeedPost {
   key: string;
   title: string;
+  excerpt: string;
   owner: string;
   expiresAt: string;
   commentCount: number;
@@ -49,7 +52,8 @@ export interface FeedResponse {
 }
 
 export interface ExtendPostRequest {
-  days: PostLifetimeDays;
+  days?: PostLifetimeDays;
+  hours?: PostLifetimeHours;
 }
 
 export interface ExtendPostResponse {

@@ -65,7 +65,7 @@ export default function FeedPage() {
         <div className="mt-6 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-8 text-center">
           <p className="text-lg font-medium">No live posts yet.</p>
           <p className="mt-2 text-xs font-bold">
-            {wallet ? "Be the first to post. Pick a lifetime of 1, 3, or 5 days." : "Verified humans have not posted yet. Check back soon."}
+            {wallet ? "Be the first to post. Pick a lifetime of 1 hour, 1, 3, or 5 days." : "Verified humans have not posted yet. Check back soon."}
           </p>
           {!wallet ? (
             <Link href="/signup" className="btn-press mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] px-6 py-3 text-sm font-bold text-[var(--color-paper)]">
@@ -85,6 +85,9 @@ export default function FeedPage() {
                   className="card-lift block rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-5"
                 >
                   <p className="text-lg font-medium">{p.title}</p>
+                  {p.excerpt ? (
+                    <p className="mt-1 line-clamp-3 text-sm leading-relaxed">{p.excerpt}</p>
+                  ) : null}
                   <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                     <span className="font-mono">{shortWallet(p.owner)}</span>
                     <span className="inline-flex items-center gap-1">
@@ -105,6 +108,9 @@ export default function FeedPage() {
                 {data.archived.map((p) => (
                   <li key={p.key} className="rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
                     <p className="text-lg font-medium">{p.title}</p>
+                    {p.excerpt ? (
+                      <p className="mt-1 line-clamp-3 text-sm leading-relaxed">{p.excerpt}</p>
+                    ) : null}
                     <p className="mt-2 text-sm">
                       <span className="font-mono">{shortWallet(p.owner)}</span> · expired, kept for the record
                     </p>

@@ -5,7 +5,7 @@ import { getWalletClient, publicClient } from "./client";
 import { getSponsorAddress } from "./client";
 import { Comments, Posts } from "./schemas";
 
-export const COMMENT_DAYS = 7;
+export const COMMENT_DAYS = 1;
 export const MAX_COMMENT_BYTES = 5 * 1024;
 
 export function validateCommentInput(input: { postKey: string; body: string }): void {

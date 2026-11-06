@@ -53,4 +53,11 @@ describe("post validation", () => {
     ).toThrow();
     expect(() => validatePostInput({ title: "t", body: "b", days: 5 })).not.toThrow();
   });
+
+  it("accepts a 1-hour lifetime and rejects bad hours or days+hours together", () => {
+    expect(() => validatePostInput({ title: "t", body: "b", hours: 1 })).not.toThrow();
+    expect(() => validatePostInput({ title: "t", body: "b", hours: 2 })).toThrow();
+    expect(() => validatePostInput({ title: "t", body: "b", days: 1, hours: 1 })).toThrow();
+    expect(() => validatePostInput({ title: "t", body: "b" })).toThrow();
+  });
 });

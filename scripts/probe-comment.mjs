@@ -1,5 +1,5 @@
 // T-010 acceptance probe. Run: node --env-file=.env.local scripts/probe-comment.mjs [postKey]
-// Creates one clearly-marked comment with fixed 7-day expiry on the given post.
+// Creates one clearly-marked comment with fixed 1-day expiry on the given post.
 // Costs a small amount of sponsor tGLM.
 import { ExpirationTime, createPublicClient, createWalletClient } from "@arkiv-network/sdk";
 import { rabdi } from "@arkiv-network/sdk/chains";
@@ -47,7 +47,7 @@ const bodyBytes = new TextEncoder().encode("T-010 comment probe. Not a real comm
 const { entityKey, expiresAt, txHash } = await walletClient.createEntity(
   Comments,
   { postKey, author: addr(probeWallet), body: bodyBytes },
-  { expiration: ExpirationTime.fromDays(7) },
+  { expiration: ExpirationTime.fromDays(1) },
 );
 console.log("entityKey:", entityKey);
 console.log("expiresAt:", expiresAt.toString(), "deltaBlocks:", (expiresAt - timing.currentBlock).toString());

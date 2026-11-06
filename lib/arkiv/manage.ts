@@ -3,7 +3,7 @@ import type { Hex } from "viem";
 import { getWalletClient, publicClient } from "./client";
 import { getDefaultStore } from "../registry/store";
 import { Posts } from "./schemas";
-import type { PostLifetime } from "./posts";
+import type { PostLifetime, PostLifetimeHours } from "./posts";
 
 export interface ManagedPost {
   key: string;
@@ -40,11 +40,16 @@ export async function assertOwner(post: ManagedPost, wallet: string): Promise<vo
 
 export async function extendPostEntity(
   entityKey: string,
-  days: PostLifetime,
+  lifetime: PostLifetime | { hours: PostLifetimeHours },
 ): Promise<{ expiresAt: string }> {
   const client = getWalletClient();
-  await client.extendEntity({ entityKey: entityKey as Hex, expiration: ExpirationTime.fromDays(days) });
-  return { expiresAt: new Date(Date.now() + days * 24 * 3600 * 1000).toISOString() };
+  const isHours = typeof lifetime === "object";
+  const expiration = isHours
+    ? ExpirationTime.fromHours(lifetime.hours)
+    : ExpirationTime.fromDays(lifetime);
+  await client.extendEntity({ entityKey: entityKey as Hex, expiration });
+  const ms = isHours ? lifetime.hours * 3600 * 1000 : (lifetime as PostLifetime) * 24 * 3600 * 1000;
+  return { expiresAt: new Date(Date.now() + ms).toISOString() };
 }
 
 export async function editPostEntity(

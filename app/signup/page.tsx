@@ -86,17 +86,16 @@ export default function SignupPage() {
 
   return (
     <main className="py-10">
-      <p className="text-sm font-medium text-[var(--color-muted)]">Human-Only Forum</p>
       <h1 className="mt-2 text-4xl font-medium tracking-tight sm:text-5xl">
         One human, one wallet.
       </h1>
-      <p className="mt-4 max-w-xl text-lg text-[var(--color-muted)]">
+      <p className="mt-4 max-w-xl text-lg">
         Verify with World ID to lock a wallet to your identity. Posts then live on lifetimes you choose.
       </p>
 
       <div className="mt-8 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-6">
         <div className="flex items-start gap-3 rounded-[var(--radius-card)] border border-[var(--color-line)] p-4">
-          <WarningCircle size={22} className="mt-0.5 shrink-0 text-[var(--color-accent)]" />
+          <WarningCircle size={22} className="mt-0.5 shrink-0 text-[var(--color-ink)]" />
           <p className="text-sm">
             <span className="font-semibold">This lock is permanent and cannot be changed.</span>
             <br />
@@ -118,7 +117,7 @@ export default function SignupPage() {
             <button
               onClick={connect}
               disabled={busy}
-              className="btn-press mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--color-accent)] px-6 py-3 text-sm font-semibold disabled:opacity-70"
+              className="btn-press mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--color-ink)] px-6 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             >
               {busy ? <Spinner size={18} className="animate-spin" /> : <Wallet size={18} />}
               Connect wallet
@@ -133,7 +132,7 @@ export default function SignupPage() {
                   placeholder="0x..."
                   autoComplete="off"
                   spellCheck={false}
-                  className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3 font-mono text-sm outline-none focus:border-[var(--color-accent)]"
+                  className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3 font-mono text-sm outline-none focus:border-[var(--color-ink)]"
                 />
               </>
             ) : (
@@ -144,7 +143,7 @@ export default function SignupPage() {
           </>
         )}
         {error ? (
-          <p role="alert" className="mt-2 text-sm font-medium text-red-700 dark:text-red-400">
+          <p role="alert" className="mt-2 text-sm font-bold">
             {error}
           </p>
         ) : null}
@@ -152,7 +151,7 @@ export default function SignupPage() {
         <button
           onClick={start}
           disabled={busy || !walletOk}
-          className="btn-press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-6 py-3 text-sm font-semibold text-[var(--color-accent-ink)] disabled:opacity-70"
+          className="btn-press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] px-6 py-3 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed"
         >
           {busy ? <Spinner size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
           Verify with World ID

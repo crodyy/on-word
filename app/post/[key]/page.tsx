@@ -126,9 +126,9 @@ export default function ThreadPage() {
   if (missing) {
     return (
       <main className="py-10">
-        <p className="text-sm text-[var(--color-muted)]"><Link href="/feed" className="underline">Feed</Link></p>
+        <p className="text-sm"><Link href="/feed" className="underline">Feed</Link></p>
         <h1 className="mt-2 text-2xl font-medium">Post not found.</h1>
-        <p className="mt-2 text-sm text-[var(--color-muted)]">It may have expired and left no cached copy, or the link is wrong.</p>
+        <p className="mt-2 text-sm">It may have expired and left no cached copy, or the link is wrong.</p>
       </main>
     );
   }
@@ -136,9 +136,9 @@ export default function ThreadPage() {
   if (archived) {
     return (
       <main className="py-10">
-        <p className="text-sm text-[var(--color-muted)]"><Link href="/feed" className="underline">Feed</Link></p>
+        <p className="text-sm"><Link href="/feed" className="underline">Feed</Link></p>
         <h1 className="mt-2 text-2xl font-medium">This post is archived.</h1>
-        <p className="mt-2 text-sm text-[var(--color-muted)]">Its lifetime ran out. The record stays visible in the feed archive.</p>
+        <p className="mt-2 text-sm">Its lifetime ran out. The record stays visible in the feed archive.</p>
       </main>
     );
   }
@@ -156,9 +156,9 @@ export default function ThreadPage() {
 
   return (
     <main className="py-10">
-      <p className="text-sm text-[var(--color-muted)]"><Link href="/feed" className="underline">Feed</Link></p>
+      <p className="text-sm"><Link href="/feed" className="underline">Feed</Link></p>
       <h1 className="mt-2 text-3xl font-medium tracking-tight">{post.title}</h1>
-      <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--color-muted)]">
+      <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <span className="font-mono">{shortWallet(post.owner)}</span>
         <span className="inline-flex items-center gap-1"><Clock size={15} /> {countdownTo(post.expiresAt)}</span>
       </p>
@@ -173,12 +173,12 @@ export default function ThreadPage() {
                 type="button"
                 onClick={() => setExtendDays(d as 1 | 7 | 30)}
                 aria-pressed={extendDays === d}
-                className={`btn-press rounded-full border px-4 py-1.5 text-sm font-semibold ${extendDays === d ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-accent-ink)]" : "border-[var(--color-line)]"}`}
+                className={`btn-press rounded-full border px-4 py-1.5 text-sm font-semibold ${extendDays === d ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-paper)]" : "border-[var(--color-line)]"}`}
               >
                 +{d}d
               </button>
             ))}
-            <button onClick={submitExtend} disabled={busy} className="btn-press rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-sm font-semibold text-[var(--color-accent-ink)] disabled:opacity-50">
+            <button onClick={submitExtend} disabled={busy} className="btn-press rounded-full bg-[var(--color-ink)] px-4 py-1.5 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed">
               Extend
             </button>
             <button onClick={() => setEditing((v) => !v)} className="btn-press inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] px-4 py-1.5 text-sm font-semibold">
@@ -188,10 +188,10 @@ export default function ThreadPage() {
           {editing ? (
             <div className="mt-4">
               <label htmlFor="edit-title" className="block text-sm font-medium">Title</label>
-              <input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-accent)]" />
+              <input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-ink)]" />
               <label htmlFor="edit-body" className="mt-3 block text-sm font-medium">Body (optional)</label>
-              <textarea id="edit-body" value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={3} className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-accent)]" />
-              <button onClick={submitEdit} disabled={busy} className="btn-press mt-3 rounded-full bg-[var(--color-accent)] px-5 py-2 text-sm font-semibold text-[var(--color-accent-ink)] disabled:opacity-50">
+              <textarea id="edit-body" value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={3} className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-ink)]" />
+              <button onClick={submitEdit} disabled={busy} className="btn-press mt-3 rounded-full bg-[var(--color-ink)] px-5 py-2 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed">
                 {busy ? "Saving..." : "Save changes"}
               </button>
             </div>
@@ -199,19 +199,19 @@ export default function ThreadPage() {
         </section>
       ) : null}
 
-      {error ? <p role="alert" className="mt-4 text-sm font-medium text-red-700 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="mt-4 text-sm font-bold">{error}</p> : null}
 
       <section className="mt-8" aria-label="Comments">
         <h2 className="text-lg font-medium">Comments ({comments.length})</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">Comments are fixed at 7 days and cannot be edited.</p>
+        <p className="mt-1 text-sm">Comments are fixed at 7 days and cannot be edited.</p>
         {comments.length === 0 ? (
-          <p className="mt-3 text-sm text-[var(--color-muted)]">No comments yet.</p>
+          <p className="mt-3 text-sm">No comments yet.</p>
         ) : (
           <ul className="mt-3 space-y-3">
             {comments.map((c) => (
               <li key={c.key} className="rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
                 <p className="text-sm">{c.body}</p>
-                <p className="mt-2 text-xs text-[var(--color-muted)]">
+                <p className="mt-2 text-xs">
                   <span className="font-mono">{shortWallet(c.author)}</span> · {countdownTo(c.expiresAt)}
                 </p>
               </li>
@@ -221,13 +221,13 @@ export default function ThreadPage() {
         {wallet ? (
           <div className="mt-4">
             <label htmlFor="comment" className="block text-sm font-medium">Add a comment</label>
-            <textarea id="comment" value={draft} onChange={(e) => setDraft(e.target.value)} rows={3} className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-accent)]" />
-            <button onClick={submitComment} disabled={busy} className="btn-press mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--color-accent)] px-5 py-2 text-sm font-semibold text-[var(--color-accent-ink)] disabled:opacity-50">
+            <textarea id="comment" value={draft} onChange={(e) => setDraft(e.target.value)} rows={3} className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-ink)]" />
+            <button onClick={submitComment} disabled={busy} className="btn-press mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--color-ink)] px-5 py-2 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed">
               {busy ? <Spinner size={15} className="animate-spin" /> : null} Post comment
             </button>
           </div>
         ) : (
-          <p className="mt-4 text-sm text-[var(--color-muted)]"><Link href="/signup" className="font-semibold underline">Verify</Link> to join the discussion.</p>
+          <p className="mt-4 text-sm"><Link href="/signup" className="font-semibold underline">Verify</Link> to join the discussion.</p>
         )}
       </section>
     </main>

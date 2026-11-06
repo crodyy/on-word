@@ -3,14 +3,14 @@
 Last updated: 2026-11-06 12:43 IST
 
 ## Summary
-Done: 3 | In progress: 0 | In review: 1 | Blocked: 0 | Todo: 15
+Done: 4 | In progress: 0 | In review: 0 | Blocked: 0 | Todo: 15
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
 |-------|-----------------------------------|------------|------------|--------|--------------------------------|---------|
 | T-001 | Scaffold Next.js 14 TS app + deps | Orchestrator | -        | DONE   | `npm run build` passes; package.json holds next@14, react, typescript, @worldcoin/idkit, @worldcoin/idkit-core, viem, @arkiv-network/sdk, vitest | 2026-11-06 |
 | T-002 | Rabdi connectivity + sponsor funding | Backend B | T-001     | DONE | chain 7794095 block 282519, sponsor balance 10 tGLM (check-rabdi.mjs; key normalized with 0x prefix) | 2026-11-06 |
-| T-003 | Registry lib TDD (UNIQUE nullifier/wallet) | Backend A | T-001 | IN_REVIEW | `vitest run` green 8/8: tests/registry.test.ts covers duplicate-nullifier reject, duplicate-wallet reject, lowercase normalize, atomic check+insert | 2026-11-06 |
+| T-003 | Registry lib TDD (UNIQUE nullifier/wallet) | Backend A | T-001 | DONE | `vitest run` green: tests/registry.test.ts covers duplicate-nullifier reject, duplicate-wallet reject, lowercase normalize, atomic check+insert | 2026-11-06 |
 | T-004 | Shared TS contracts (lib/types.ts) | Orchestrator | T-001 | TODO | `npx tsc --noEmit` passes; types match PROMPT.md section 8 exactly | 2026-11-06 |
 | T-005 | POST /api/rp-signature | Backend A | T-001 | TODO | curl with `{"action":"human-forum-register-v1"}` returns `{sig, nonce, created_at, expires_at}`; wrong action returns 400 bad-action | 2026-11-06 |
 | T-006 | POST /api/verify-proof + binding | Backend A | T-003, T-005 | TODO | simulator signup x2: first 200 `{ok:true}`, second 409 worldid-reused; reused wallet 409 wallet-reused; files app/api/verify-proof/route.ts, lib/worldid/verify.ts | 2026-11-06 |

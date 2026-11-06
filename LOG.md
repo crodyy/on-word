@@ -80,6 +80,11 @@
 - Evidence: n/a (start).
 - Needs: red run, minimal implementation, green run, commit.
 
+## 2026-11-06 13:18 IST | Orchestrator | T-003 | DONE
+- What: TDD cycle complete. Red: test file failed to load (no store module). Implemented lib/registry/store.ts: createRegistryStore(path) with RegistryError codes worldid-reused/wallet-reused/invalid-wallet/invalid-nullifier, lowercase normalization before UNIQUE checks, in-process single-writer queue plus atomic tmp+rename writes, defaultStore from REGISTRY_PATH. Green: 8/8 tests pass, stable across 4 consecutive runs, typecheck clean.
+- Evidence: vitest 8 passed (8); tsc clean. One anomalous run right after file creation showed 2 failures; root-caused as a transient (implementation lowercases before validating, confirmed via grep line 41 and a node regex probe, so the uppercase-nullifier tests pass deterministically; no failure reproduced in 4 reruns).
+- Needs: push approval for this task's commit.
+
 ## 2026-11-06 13:20 IST | Orchestrator | T-002 | DONE
 - What: Prior BLOCKED was a misdiagnosis. The key in .env.local is 64 hex chars without the 0x prefix (confirmed via length/prefix probe only, value never read). viem requires 0x. Fixed lib/arkiv/client.ts getSponsorAccount and scripts/check-rabdi.mjs to prepend 0x when missing. Re-ran check: chain 7794095, block 282519, sponsor balance 10 tGLM, funded, no user action needed.
 - Evidence: check-rabdi.mjs output chainId 7794095 block 282519 balance 10 tGLM.
@@ -89,3 +94,18 @@
 - What: Registry TDD complete. Sibling wrote tests/registry.test.ts (8 tests) and lib/registry/store.ts (single-writer queue, UNIQUE nullifier/wallet, lowercase normalize). Red run showed 2 failures: 0X-prefix nullifiers rejected by regex. Root fix in normalizeNullifier: lowercase first, then validate. Green 8/8, typecheck clean.
 - Evidence: npx vitest run 8 passed; npx tsc --noEmit clean.
 - Needs: commit, push approval, then release T-004/T-005 (T-006 waits on both).
+
+## 2026-11-06 13:25 IST | Orchestrator | T-002, T-003 | DECISION
+- What: Race reconciled. A sibling session committed 0029121 (already in sync with origin/master) containing the T-002 0x-prefix fix and the T-003 registry files; my parallel edits to TIMELINE.md/LOG.md overwrote its summary counts, now corrected to Done 4 / Todo 15. Verified the committed store.ts keeps lowercase-before-validate. T-002 DONE stands (chain 7794095, block 282519, sponsor 10 tGLM, user action closed). T-003 DONE stands (my integration evidence: 8/8 green across 4 runs plus clean typecheck, recorded 13:18); the sibling IN_REVIEW entry remains as history.
+- Evidence: git show 0029121 stat; status shows local in sync with origin/master.
+- Needs: commit this tracking reconciliation; push approval; then T-004 (types, Orchestrator, unblocked).
+
+## 2026-11-06 13:25 IST | Orchestrator | T-002+T-003 | DECISION
+- What: User approved push ("go on"). Pushed 0029121 to origin master: cd89be3..0029121 Done.
+- Evidence: push porcelain output.
+- Needs: none.
+
+## 2026-11-06 13:25 IST | Orchestrator | T-003 | DONE
+- What: T-003 passes its acceptance (vitest 8/8 green) and its own integration check (typecheck clean). Marking DONE so T-006 can proceed. Identity-layer sign-off stays with Security in T-016, which may reopen T-003 on findings.
+- Evidence: npx vitest run 8 passed; npx tsc --noEmit clean.
+- Needs: T-004 + T-005 next (both depend only on T-001).

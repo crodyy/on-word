@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={mono.variable}>
-      <body>
+      <body className="flex min-h-[100dvh] flex-col">
         <SiteHeader />
-        <div className="mx-auto w-full max-w-3xl px-5 sm:px-8">{children}</div>
+        <div className="mx-auto w-full max-w-3xl flex-1 px-5 sm:px-8">{children}</div>
         <footer className="mx-auto w-full max-w-3xl px-5 sm:px-8 pb-10 pt-6 text-xs font-bold text-[var(--color-ink)]">
           <p>Human-Only Forum. Prototype on the Rabdi testnet.</p>
         </footer>

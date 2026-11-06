@@ -191,9 +191,13 @@ export async function fetchLivePosts(sponsor: Hex): Promise<{ posts: ChainPost[]
   return { posts, currentBlock };
 }
 
-export async function countComments(postKey: string, sponsor: Hex): Promise<number> {
+// Counts the comments filed under a post. parentKey is the parent post's
+// ENTITY KEY ($key): comment rows store the parent's $key in their postKey
+// column (thread URLs and the comments API both use $key), not the random
+// postKey column from Posts. Counting by the column never matches.
+export async function countComments(parentKey: string, sponsor: Hex): Promise<number> {
   const { eq } = await import("@arkiv-network/sdk/query");
-  const n = await publicClient.count().from(Comments).ownedBy(sponsor).where(eq("postKey", postKey)).fetch();
+  const n = await publicClient.count().from(Comments).ownedBy(sponsor).where(eq("postKey", parentKey)).fetch();
   return Number(n);
 }
 

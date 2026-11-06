@@ -88,7 +88,7 @@ export async function GET(): Promise<NextResponse<FeedResponse | ApiError>> {
     const counts = new Map<string, number>();
     for (const p of posts) {
       try {
-        counts.set(p.key, await countComments(p.postKey, sponsor));
+        counts.set(p.key, await countComments(p.key, sponsor));
       } catch {
         counts.set(p.key, 0);
       }

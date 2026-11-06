@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Check, Copy, SignOut, UserCircle } from "@phosphor-icons/react";
 import { getBoundWallet, setBoundWallet, shortWallet } from "../lib/wallet";
 
@@ -10,10 +11,15 @@ export default function SiteHeader() {
   const [menu, setMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
+  // The header lives in the layout and does not remount on client-side
+  // navigation, so re-read the bound wallet on every route change. Otherwise
+  // it keeps showing the visitor icon after a signup until a full reload.
   useEffect(() => {
     setWallet(getBoundWallet());
-  }, []);
+    setMenu(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!menu) return;
@@ -53,7 +59,6 @@ export default function SiteHeader() {
       <Link href="/" className="flex items-center gap-2" aria-label="Human-Only Forum home">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.jpg" alt="Human-Only Forum lotus logo" width={72} height={72} className="rounded-full grayscale contrast-125" />
-        <span className="text-sm font-bold">Human-Only Forum</span>
       </Link>
       <div className="flex items-center gap-2">
         {wallet ? (

@@ -1,8 +1,59 @@
-* {
-  box-sizing: border-box;
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+  --color-paper: #f4f2ec;
+  --color-surface: #fffdf8;
+  --color-ink: #16150f;
+  --color-muted: #4f4a3d;
+  --color-line: #cfc8b4;
+  --color-accent: #17503c;
+  --color-accent-ink: #ffffff;
+  --radius-card: 14px;
+}
+
+.dark {
+  --color-paper: #12140f;
+  --color-surface: #1b1e16;
+  --color-ink: #f0eee4;
+  --color-muted: #a8a496;
+  --color-line: #2e3226;
+  --color-accent: #5cbf95;
+  --color-accent-ink: #0c120e;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
 }
 
 body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+input::placeholder {
+  color: #6e6757;
+  opacity: 1;
+}
+
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+.card-lift {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-2px);
 }

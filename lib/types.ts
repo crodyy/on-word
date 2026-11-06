@@ -74,6 +74,17 @@ export interface CreateCommentResponse {
   entityKey: string;
 }
 
+export interface ThreadComment {
+  key: string;
+  author: string;
+  body: string;
+  expiresAt: string;
+}
+
+export interface CommentsResponse {
+  comments: ThreadComment[];
+}
+
 export type ApiErrorCode =
   | "bad-action"
   | "verify-failed"

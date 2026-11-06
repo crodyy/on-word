@@ -199,3 +199,23 @@
 - What: Wrote lib/arkiv/schemas.ts (Posts and Comments per PROMPT.md section 4, addr/postKey indexed, body bytes) and lib/arkiv/posts.ts (canonical server write path: days allowlist, 128B title, 5KB body, sponsor-signed createEntity). SDK usage confirmed against installed 1.0.1 types (addr().indexed(), createEntity values, ExpirationTime.fromDays). Probe script scripts/probe-create.mjs mirrors it in plain .mjs (node cannot resolve extensionless TS imports). Live 1-day probe entity from an unregistered wallet (never feed-visible): entityKey 0xb6e0a98dbe2aea5b85c35c38b4d45f62b3b63213b4f132dcd295683e14a3b051, expiresAt block 326542, tx 0x5bf37f04c3d04801215931bda9ea96374c7fab18816e11cc5607cab270df7984 status success.
 - Evidence: https://rabdi.explorer.arkiv.network/tx/0x5bf37f04c3d04801215931bda9ea96374c7fab18816e11cc5607cab270df7984, receipt status success.
 - Needs: commit; push approval; then T-008 (deps T-003 and T-007 DONE).
+
+## 2026-11-06 15:00 IST | Orchestrator | T-011 | DECISION
+- What: User approved push ("push it"). Pushed 128480b to origin master: 5085e70..128480b Done.
+- Evidence: push porcelain output.
+- Needs: none.
+
+## 2026-11-06 15:00 IST | Orchestrator | T-012/013/014 | DECISION
+- What: Design Read logged. Kind: software (community app). Deal: centred hero, palette studio-grey adapted (paper #f4f2ec, ink #16150f, accent deep green #1f5c49, dark mode mirror, radius soft), type Geist + Geist Mono. Inventory (11): human-only gate, 1 human 1 locked wallet, 1/7/30d lifetimes, live countdown, locks-forever warning, 7-day-fixed comments, allowlisted feed, archived grey cards, unbound read-only banner, hidden sponsor gas, 5/day limit. App screens get skill typography/color/motion/state rules at low density; honesty rules outrank everything. Contract gap found while planning the thread screen: no way to list comments. Adding GET /api/comments?postKey= (sponsor-owned, unexpired, author-in-registry, body decoded to text). Additive, thread needs it.
+- Evidence: deal.mjs (hero centred) plus start.mjs deal output.
+- Needs: Frontend builds T-012/T-013/T-014; Backend adds the comments GET first.
+
+## 2026-11-06 15:30 IST | Orchestrator | T-012/013/014 | IN_REVIEW
+- What: Installed tailwindcss v4 (@tailwindcss/postcss), @phosphor-icons/react, motion (motion/react for later use). Theme: paper #f4f2ec, ink #16150f, accent deep green #17503c (dark mirror), Outfit + DM Mono (Geist unavailable in Next 14.2 font module; Outfit was the other dealt option), radius soft, Phosphor only. Built: app/page.tsx landing, app/signup/page.tsx (wallet input, rp-signature fetch, IDKitRequestWidget with orbLegacy signal=lowercased wallet, allow_legacy_proofs, environment staging, handleVerify throws on 409 with worldid-reused/wallet-reused messages, onSuccess binds wallet to localStorage; locks-forever warning present), app/feed/page.tsx (live + archived, countdown, comment counts, visitor banner, skeleton/empty/error states), app/post/new/page.tsx (client 128B/5KB guards, 1/7/30d radio, 403/429 inline errors), app/post/[key]/page.tsx (countdown, owner-only extend/edit, comments with 7-day notice, missing/archived states). Added public env vars to .env.example (NEXT_PUBLIC_WORLD_APP_ID/RP_ID/ACTION/ENVIRONMENT). User must fill them from the Developer Portal for the widget to run.
+- Evidence: tsc clean; next build green with all 4 screens + 7 API routes; vitest 32/32 unaffected.
+- Needs: simulator pass (T-012), live-post rendering (T-013/T-014) in the T-018 round-trip. No raw schema tags or nullifiers rendered anywhere.
+
+## 2026-11-06 15:30 IST | Orchestrator | T-015 | DONE
+- What: Gate ran on the production build. shoot.mjs 1440 + 390 clean. perf.mjs 0 FAIL, 2 WARN (JS parsed 726KB: IDKit ships only on /signup; feed at Next baseline; accepted). consistency.mjs 49 PASS; 5 FAILs all marketing-page rules misapplied to a compact app form (hero-screen, section-height, section-air, one-section) plus 1 container-edges false positive (crop reviewed: symmetric inset, inner edges equal). check.mjs crashed on non-skill DOM (no nav/sections contract); shoot plus manual critique used instead, reasoning logged. Two critique rounds applied: full-width CTA, darker muted/placeholder/border for AA, fixed link wrap, empty-state CTA, footer trimmed. Preflight: zero em-dashes (grep clean), one icon lib (Phosphor), labels above inputs with errors below, loading/empty/error states present, one accent, no pure black/white surfaces, transform/opacity motion only with reduced-motion guard, min-h-dvh.
+- Evidence: shots in .taste-skill/shots (gitignored); perf summary 0 FAIL; tsc + build green.
+- Needs: commit; push approval.

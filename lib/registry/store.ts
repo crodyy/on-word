@@ -113,6 +113,17 @@ export function createRegistryStore(path: string): RegistryStore {
   };
 }
 
-const defaultPath = process.env.REGISTRY_PATH ?? "./data/registry.json";
+const fallbackPath = "./data/registry.json";
 
-export const defaultStore: RegistryStore = createRegistryStore(defaultPath);
+let cachedDefault: { path: string; store: RegistryStore } | undefined;
+
+// Lazily bound so tests (and any host) can point REGISTRY_PATH at a scratch
+// file before first use. The instance is cached per path, preserving the
+// single-writer queue across requests sharing one path.
+export function getDefaultStore(): RegistryStore {
+  const path = process.env.REGISTRY_PATH ?? fallbackPath;
+  if (!cachedDefault || cachedDefault.path !== path) {
+    cachedDefault = { path, store: createRegistryStore(path) };
+  }
+  return cachedDefault.store;
+}

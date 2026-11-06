@@ -145,6 +145,21 @@
 - Evidence: push porcelain output.
 - Needs: none.
 
+## 2026-11-06 14:15 IST | Orchestrator | T-008 | DECISION
+- What: Auth transport for writes is unspecified in PROMPT.md section 8 (bodies carry no wallet), so settling it here: callers send their bound wallet in the `x-wallet` header; request bodies stay contract-exact. Server lowercases it, requires a registry binding (else 403), requires equality with the stored `author` on extend/edit (else 403). Known V1 gap: no per-request wallet signature, so a caller can claim any *bound* wallet (impersonation), but never an unbound one; the feed only shows author-in-registry posts. Fix for V2 is per-action wallet signatures (SIWE-style). Security reviews in T-017.
+- Evidence: PROMPT.md sections 5/8 have no auth transport; AGENTS.md only requires unbound rejection.
+- Needs: Backend B implements per this decision in T-008/T-011.
+
+## 2026-11-06 14:15 IST | Orchestrator | T-008 | STARTED
+- What: POST /api/posts plus file-backed rate limit (5/day/wallet). TDD: rate-limit unit tests + validation tests first.
+- Evidence: n/a (start).
+- Needs: green tests, curl evidence for 403/400/429 paths.
+
+## 2026-11-06 14:25 IST | Orchestrator | T-008 | IN_REVIEW
+- What: TDD done. Wrote tests/posting.test.ts (5/day then reject, per-wallet isolation, 24h reset, validation rejects) and tests/posts-route.test.ts (403 missing/unbound, 400 bad days/oversize, 429 on 6th) red first (missing modules, then @ alias). Implemented lib/arkiv/rateLimit.ts (file-backed hits, 24h window, RateLimitedError) and app/api/posts/route.ts (x-wallet header per T-008 DECISION, binding 403, shape/validate 400, 429, sponsor-signed createEntity, EntityMutationError to generic 403). Fixed two real issues found by tests: added @ alias to vitest.config.ts, and replaced eager defaultStore/defaultVerifyStore singletons (captured env at first import, invisible to tests) with lazy getDefaultStore/getDefaultVerifyStore cached per path. 25/25 green, typecheck clean, build passes.
+- Evidence: vitest 25 passed across 4 files; tsc clean; next build includes /api/posts.
+- Needs: commit and push approval; live 6-post 429 run deferred to the step-7 task (costs 5 txs, needs a bound wallet).
+
 ## 2026-11-06 14:05 IST | Orchestrator | T-007 | STARTED
 - What: Backend B lane. Schemas plus server write path per PROMPT.md section 4 and the docs (defineSchema, ExpirationTime, sponsor-owned per Q1 DECISION).
 - Evidence: n/a (start).

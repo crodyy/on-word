@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VerifyError, defaultVerifyStore, verifyProof } from "@/lib/worldid/verify";
+import { VerifyError, getDefaultVerifyStore, verifyProof } from "@/lib/worldid/verify";
 import type { ApiError, VerifyProofSuccess } from "@/lib/types";
 
 const FALLBACK_ACTION = "human-forum-register-v1";
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<VerifyProofSu
     const result = await verifyProof(
       { idkitResponse: body.idkitResponse, wallet: body.wallet },
       {
-        store: defaultVerifyStore,
+        store: getDefaultVerifyStore(),
         rpId: process.env.WORLD_RP_ID ?? "",
         expectedAction: process.env.WORLD_ACTION_REGISTER ?? FALLBACK_ACTION,
         expectedEnv: process.env.WORLD_ENVIRONMENT ?? "staging",

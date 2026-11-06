@@ -1,5 +1,5 @@
 import { hashSignal } from "@worldcoin/idkit-core/hashing";
-import { RegistryError, createRegistryStore, type RegistryStore } from "../registry/store";
+import { getDefaultStore, RegistryError, type RegistryStore } from "../registry/store";
 
 export type VerifyErrorCode = "verify-failed" | "worldid-reused" | "wallet-reused";
 
@@ -90,6 +90,6 @@ export async function verifyProof(
   }
 }
 
-const defaultPath = process.env.REGISTRY_PATH ?? "./data/registry.json";
-
-export const defaultVerifyStore: RegistryStore = createRegistryStore(defaultPath);
+export function getDefaultVerifyStore(): RegistryStore {
+  return getDefaultStore();
+}

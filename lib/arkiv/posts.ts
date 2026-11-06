@@ -16,12 +16,25 @@ export function assertPostLifetime(days: number): asserts days is PostLifetime {
   }
 }
 
-export interface CreatePostInput {
-  authorWallet: Hex;
-  postKey: string;
+export interface PostDraft {
   title: string;
   body: string;
-  days: PostLifetime;
+  days: number;
+}
+
+export function validatePostInput(draft: PostDraft): asserts draft is PostDraft & { days: PostLifetime } {
+  assertPostLifetime(draft.days);
+  if (Buffer.byteLength(draft.title, "utf8") > MAX_TITLE_BYTES) {
+    throw new Error("title over 128 bytes");
+  }
+  if (new TextEncoder().encode(draft.body).length > MAX_BODY_BYTES) {
+    throw new Error("body over 5KB");
+  }
+}
+
+export interface CreatePostInput extends PostDraft {
+  authorWallet: Hex;
+  postKey: string;
 }
 
 export interface CreatePostResult {
@@ -31,14 +44,8 @@ export interface CreatePostResult {
 }
 
 export async function createPostEntity(input: CreatePostInput): Promise<CreatePostResult> {
-  assertPostLifetime(input.days);
-  if (Buffer.byteLength(input.title, "utf8") > MAX_TITLE_BYTES) {
-    throw new Error("title over 128 bytes");
-  }
+  validatePostInput(input);
   const bodyBytes = new TextEncoder().encode(input.body);
-  if (bodyBytes.length > MAX_BODY_BYTES) {
-    throw new Error("body over 5KB");
-  }
   const client = getWalletClient();
   const { entityKey, expiresAt, txHash } = await client.createEntity(
     Posts,

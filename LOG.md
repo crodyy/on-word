@@ -244,3 +244,8 @@
 - What: User approved push ("push it"). Pushed a57589c to origin master: efaf82e..a57589c Done. V1 closed and fully pushed.
 - Evidence: push porcelain output.
 - Needs: V2 UI/UX scope from user.
+
+## 2026-11-06 18:10 IST | Orchestrator | V2 | DECISION
+- What: User approved push ("push it"). First attempt hit a transient connection reset; retry pushed 3fcb4bc: a57589c..3fcb4bc Done. Tree includes the slider revert.
+- Evidence: push porcelain output.
+- Needs: none.

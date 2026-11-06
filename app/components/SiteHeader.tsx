@@ -57,7 +57,7 @@ export default function SiteHeader() {
     <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-4 sm:px-8">
       <Link href="/" className="flex items-center gap-2" aria-label="Human-Only Forum home">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.jpg" alt="Human-Only Forum lotus logo" width={28} height={28} className="rounded-full grayscale contrast-125" />
+        <img src="/logo.jpg" alt="Human-Only Forum lotus logo" width={72} height={72} className="rounded-full grayscale contrast-125" />
         <span className="text-sm font-bold">Human-Only Forum</span>
       </Link>
       <div className="flex items-center gap-2">

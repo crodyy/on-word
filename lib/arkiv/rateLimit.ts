@@ -1,4 +1,5 @@
-import { readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 
 export class RateLimitedError extends Error {
   constructor() {
@@ -43,6 +44,7 @@ export async function checkAndRecord(wallet: string, opts: RateLimitOptions): Pr
   if (recent.length >= limit) throw new RateLimitedError();
   recent.push(now);
   state.hits[key] = recent;
+  await mkdir(dirname(opts.path), { recursive: true });
   const tmp = `${opts.path}.${process.pid}.tmp`;
   await writeFile(tmp, JSON.stringify(state), "utf8");
   await rename(tmp, opts.path);

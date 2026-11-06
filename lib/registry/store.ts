@@ -1,4 +1,5 @@
-import { readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 
 export type RegistryErrorCode =
   | "worldid-reused"
@@ -57,6 +58,7 @@ async function readRegistry(path: string): Promise<RegistryFile> {
 }
 
 async function writeRegistry(path: string, data: RegistryFile): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
   const tmp = `${path}.${process.pid}.tmp`;
   await writeFile(tmp, JSON.stringify(data, null, 2), "utf8");
   await rename(tmp, path);

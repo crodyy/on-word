@@ -39,10 +39,13 @@ export interface FeedPost {
   title: string;
   owner: string;
   expiresAt: string;
+  commentCount: number;
+  expired: boolean;
 }
 
 export interface FeedResponse {
   posts: FeedPost[];
+  archived: FeedPost[];
 }
 
 export interface ExtendPostRequest {

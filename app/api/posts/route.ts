@@ -5,7 +5,9 @@ import type { Hex } from "viem";
 import { getDefaultStore } from "@/lib/registry/store";
 import { createPostEntity, validatePostInput } from "@/lib/arkiv/posts";
 import { checkAndRecord, RateLimitedError } from "@/lib/arkiv/rateLimit";
-import type { ApiError, CreatePostResponse } from "@/lib/types";
+import { countComments, fetchLivePosts, loadCache, saveCache, splitFeed, upsertCache } from "@/lib/arkiv/feed";
+import { getSponsorAddress } from "@/lib/arkiv/client";
+import type { ApiError, CreatePostResponse, FeedResponse } from "@/lib/types";
 
 const RATE_PATH = process.env.RATELIMIT_PATH ?? "./data/ratelimit.json";
 
@@ -56,5 +58,31 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreatePostRes
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
     throw err;
+  }
+}
+
+const CACHE_PATH = process.env.FEED_CACHE_PATH ?? "./data/cache.json";
+
+export async function GET(): Promise<NextResponse<FeedResponse | ApiError>> {
+  try {
+    const sponsor = getSponsorAddress();
+    const allowlist = new Set(
+      (await getDefaultStore().getAllowlist()).map((w) => w.toLowerCase()),
+    );
+    const { posts, currentBlock } = await fetchLivePosts(sponsor);
+    const cache = await loadCache(CACHE_PATH);
+    const counts = new Map<string, number>();
+    for (const p of posts) {
+      try {
+        counts.set(p.key, await countComments(p.postKey));
+      } catch {
+        counts.set(p.key, 0);
+      }
+    }
+    const feed = splitFeed(posts, allowlist, currentBlock, counts, cache);
+    await saveCache(CACHE_PATH, upsertCache(cache, posts)).catch(() => undefined);
+    return NextResponse.json(feed);
+  } catch {
+    return NextResponse.json({ error: "bad-request" }, { status: 500 });
   }
 }

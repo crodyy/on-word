@@ -3,7 +3,7 @@
 Last updated: 2026-11-06 12:43 IST
 
 ## Summary
-Done: 7 | In progress: 0 | In review: 1 | Blocked: 0 | Todo: 11
+Done: 8 | In progress: 0 | In review: 2 | Blocked: 0 | Todo: 9
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -16,7 +16,7 @@ Done: 7 | In progress: 0 | In review: 1 | Blocked: 0 | Todo: 11
 | T-006 | POST /api/verify-proof + binding | Backend A | T-003, T-005 | IN_REVIEW | lib/worldid/verify.ts + route written, vitest 16/16 green, build passes; REMAINING: simulator signup x2 with 409s (needs user) | 2026-11-06 |
 | T-007 | Arkiv schemas + server write path | Backend B | T-001, T-002 | DONE | live createEntity 1d on Rabdi: entityKey 0xb6e0a9.., expiresAt block 326542, tx 0x5bf37f04.. status success (explorer link in LOG) | 2026-11-06 |
 | T-008 | POST /api/posts + rate limit | Backend B | T-003, T-007 | IN_REVIEW | route + file-backed 5/day limit, vitest 25/25, build passes; REMAINING: live 6-post 429 run (belongs to step-7 task, costs 5 txs) | 2026-11-06 |
-| T-009 | GET /api/posts feed + cache | Backend B | T-008 | TODO | returns only ownedBy(sponsor) + live + author-in-registry, newest first, Live/Archived split via data/cache.json; spoof entity under same tag from unbound wallet is hidden | 2026-11-06 |
+| T-009 | GET /api/posts feed + cache | Backend B | T-008 | DONE | live curl returns {posts:[],archived:[]} with probe hidden (unregistered author); cache.json upsert verified then cleaned; vitest 30/30 | 2026-11-06 |
 | T-010 | POST /api/comments (fixed 7d) | Backend B | T-007 | TODO | comment gets 7-day expiry; missing or expired parent rejected; no comment edit/extend routes exist; file app/api/comments/route.ts | 2026-11-06 |
 | T-011 | Extend + edit post routes (owner-only) | Backend B | T-008 | TODO | owner extend bumps expiresAt from now; non-owner extend/edit 403; files app/api/posts/[key]/extend/route.ts, app/api/posts/[key]/edit/route.ts | 2026-11-06 |
 | T-012 | Signup screen + IDKit widget | Frontend | T-004, T-005, T-006 | TODO | app/signup/page.tsx: orbLegacy signal=wallet flow, locks-forever warning, inline 409 errors, Design Read logged; no raw schema tags or nullifiers rendered | 2026-11-06 |

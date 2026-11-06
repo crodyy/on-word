@@ -165,6 +165,16 @@
 - Evidence: n/a (start).
 - Needs: schema shapes from spec, createEntity test on Rabdi with tx hash.
 
+## 2026-11-06 14:30 IST | Orchestrator | T-009 | DECISION
+- What: Additive contract extension (Orchestrator-owned): FeedPost gains commentCount and expired; FeedResponse gains archived. Frontend needs both (T-013 acceptance: comment count, archived grey cards); contract core {key,title,owner,expiresAt} unchanged.
+- Evidence: T-013 acceptance requirements.
+- Needs: Frontend consumes per extended contract.
+
+## 2026-11-06 14:30 IST | Orchestrator | T-009 | DONE
+- What: Built lib/arkiv/feed.ts (ownedBy(sponsor) query, desc(postKey) paging, allowlist + expiry filter, cache upsert, Live/Archived split, per-post comment counts) plus GET /api/posts. Query shape validated live first via scripts/probe-feed.mjs (1 row, probe entity, 0 comments). Live route curl returns empty feed with the probe hidden: ownedBy matches but author is unregistered. Fixed real bug: data/ dir never created so cache writes failed silently; all three file writers now mkdir recursive. Verified cache.json upsert, then removed data/ to keep the tree clean (gitignored). types.ts extended per DECISION above. 30/30 tests, typecheck clean, build green.
+- Evidence: curl /api/posts {posts:[],archived:[]}; cache.json held probe entity pre-cleanup; vitest 30 passed; tsc clean.
+- Needs: commit; push approval; then T-010 (deps T-007 DONE).
+
 ## 2026-11-06 14:12 IST | Orchestrator | T-007 | DONE
 - What: Wrote lib/arkiv/schemas.ts (Posts and Comments per PROMPT.md section 4, addr/postKey indexed, body bytes) and lib/arkiv/posts.ts (canonical server write path: days allowlist, 128B title, 5KB body, sponsor-signed createEntity). SDK usage confirmed against installed 1.0.1 types (addr().indexed(), createEntity values, ExpirationTime.fromDays). Probe script scripts/probe-create.mjs mirrors it in plain .mjs (node cannot resolve extensionless TS imports). Live 1-day probe entity from an unregistered wallet (never feed-visible): entityKey 0xb6e0a98dbe2aea5b85c35c38b4d45f62b3b63213b4f132dcd295683e14a3b051, expiresAt block 326542, tx 0x5bf37f04c3d04801215931bda9ea96374c7fab18816e11cc5607cab270df7984 status success.
 - Evidence: https://rabdi.explorer.arkiv.network/tx/0x5bf37f04c3d04801215931bda9ea96374c7fab18816e11cc5607cab270df7984, receipt status success.

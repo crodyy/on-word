@@ -4,19 +4,16 @@ import { EntityMutationError } from "@arkiv-network/sdk";
 import type { Hex } from "viem";
 import { getDefaultStore } from "@/lib/registry/store";
 import { createPostEntity, validatePostInput } from "@/lib/arkiv/posts";
+import { assertWriteAuth } from "@/lib/auth/challenge";
 import { checkAndRecord, RateLimitedError, releaseSlot } from "@/lib/arkiv/rateLimit";
 import { countComments, fetchLivePosts, loadCache, saveCache, splitFeed, upsertCache } from "@/lib/arkiv/feed";
 import { getSponsorAddress } from "@/lib/arkiv/client";
 import type { ApiError, CreatePostResponse, FeedResponse } from "@/lib/types";
 
 const RATE_PATH = process.env.RATELIMIT_PATH ?? "./data/ratelimit.json";
+const NONCE_PATH = process.env.NONCE_PATH ?? "./data/nonces.json";
 
 export async function POST(req: NextRequest): Promise<NextResponse<CreatePostResponse | ApiError>> {
-  const wallet = req.headers.get("x-wallet");
-  if (!wallet) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  const binding = await getDefaultStore().getBinding(wallet).catch(() => undefined);
-  if (!binding) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-
   const body = (await req.json().catch(() => null)) as {
     title?: unknown;
     body?: unknown;
@@ -35,8 +32,23 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreatePostRes
   } catch {
     return NextResponse.json({ error: "bad-request" }, { status: 400 });
   }
+  // The x-wallet header is only a hint. The caller must prove ownership with
+  // a fresh signature over a server-issued nonce. Every failure is a 403.
+  let wallet: string;
   try {
-    await checkAndRecord(binding.wallet, { path: RATE_PATH });
+    wallet = await assertWriteAuth(
+      {
+        wallet: req.headers.get("x-wallet"),
+        nonce: req.headers.get("x-auth-nonce"),
+        signature: req.headers.get("x-auth-signature"),
+      },
+      { getBinding: (w) => getDefaultStore().getBinding(w), noncePath: NONCE_PATH },
+    );
+  } catch {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  try {
+    await checkAndRecord(wallet, { path: RATE_PATH });
   } catch (err) {
     if (err instanceof RateLimitedError) {
       return NextResponse.json({ error: "rate-limited" }, { status: 429 });
@@ -46,7 +58,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreatePostRes
   try {
     const postKey = `${Date.now()}-${randomBytes(8).toString("hex")}`;
     const res = await createPostEntity({
-      authorWallet: binding.wallet as Hex,
+      authorWallet: wallet as Hex,
       postKey,
       title: body.title,
       body: body.body,
@@ -55,7 +67,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreatePostRes
     return NextResponse.json({ entityKey: res.entityKey });
   } catch (err) {
     // Failed chain writes must not burn daily quota.
-    await releaseSlot(binding.wallet, { path: RATE_PATH }).catch(() => undefined);
+    await releaseSlot(wallet, { path: RATE_PATH }).catch(() => undefined);
     if (err instanceof EntityMutationError) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }

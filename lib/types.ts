@@ -113,3 +113,8 @@ export interface WorldConfigResponse {
   action: string;
   environment: "staging" | "production" | "sandbox";
 }
+
+export interface AuthChallengeResponse {
+  nonce: string;
+  expiresAt: string;
+}

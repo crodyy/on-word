@@ -294,3 +294,13 @@
 - What: Fixed audit run-2 content layer (1 MEDIUM + 3 LOWs) with TDD. Comments now throttled 5/day on their own rate path (429 before any chain read); releaseSlot() compensates failed writes on posts + comments + parent-miss paths so quota is only burned by successful writes; upsertCache filters/prunes non-allowlisted rows at ingestion and splitFeed re-checks the allowlist for archived rows; countComments scoped with ownedBy(sponsor).
 - Evidence: RED watched (3 failures for the right reasons: releaseSlot missing, 2 allowlist), then GREEN: vitest 45/45 across 8 files (6 new tests), tsc clean, build green. Only Backend B files touched; SiteHeader/layout edits and security-audit/ left out of the commit.
 - Needs: user approval to push; HIGHs T-021/T-022 need the auth-design decision (wallet-signed challenge vs session).
+
+## 2026-11-06 22:05 IST | Orchestrator | push | DECISION (push approved)
+- What: User approved push for dbaaa84. Merged origin/master 891a77f (teammate audit) first: verified local security-audit/ copy identical (CRLF-only diff), removed untracked copy, merged without conflicts, then pushed 891a77f..1a3c513. Note: push carried b41ae0a (Frontend no-dark-mode) too since it was on the same branch.
+- Evidence: push porcelain `891a77f..1a3c513 master -> master`.
+- Needs: nothing; T-021/T-022 proceed with wallet-signed challenge per user direction.
+
+## 2026-11-06 22:15 IST | Backend A | T-021a+T-021b | COMMITTED (push approval pending)
+- What: Server write-auth via wallet-signed challenge (T-021a lib: issueChallenge/consumeChallenge/authMessage/verifyWalletSignature/assertWriteAuth, single-use 10-min nonces, file-backed serialized, expired-prune on issue; 8 tests. T-021b: new GET /api/auth/challenge + all 4 write routes require fresh signature, validation-before-auth so 400s stay 400s; new AuthChallengeResponse contract type).
+- Evidence: RED watched (missing module, then 403-gate tests), GREEN: vitest 57/57 across 10 files (12 new), tsc clean. Bound wallet without signature 403s on posts/comments/extend/edit.
+- Needs: user approval to push both commits; T-022 (signup strict + signature) and T-023 (frontend signing) remain.

@@ -90,10 +90,10 @@ Note: your brief asked for "4 agents" but described five roles (frontend, two ba
 ### Agent 2 — Frontend
 **Builds:** `/signup`, `/feed`, `/post/new`, `/post/[key]` and shared components (PROMPT.md §6).
 
-- Use IDKit with `orbLegacy({signal})`, `signal = username|wallet`. The RP signature comes only from `POST /api/rp-signature`.
+- Use IDKit with `orbLegacy({signal})`, `signal = wallet` (lowercased). The RP signature comes only from `POST /api/rp-signature`.
 - Show lifetime countdown, the "locks forever, cannot change" warning, and "7-day fixed, cannot edit" for comments.
 - Unbound visitor: read-only plus a "verify to participate" banner. Expired post: grey "archived" card.
-- Inline errors for `username-taken`, `worldid-reused`, `wallet-reused`, `429`, with no retry loophole.
+- Inline errors for `worldid-reused`, `wallet-reused`, `429`, with no retry loophole.
 - Hide RPC and gas details from the user. Never hide lifetime or permanence facts.
 - Show **only** the fields the API returns. Never render raw schema tags, access keys, nullifiers, or other users' registry data.
 - Consume APIs strictly per PROMPT.md §8. If a response shape is missing something, ask the Orchestrator and do not guess.
@@ -101,9 +101,9 @@ Note: your brief asked for "4 agents" but described five roles (frontend, two ba
 ### Agent 3 — Backend A: World ID
 **Builds:** registry, RP signing, proof verification.
 
-- Registry: UNIQUE on `username`, `nullifier`, `wallet`. Wallet is lowercased. Username matches `^[a-z0-9_]{5,24}$`, validated server-side.
+- Registry: UNIQUE on `nullifier` and `wallet`. Wallet is lowercased and validated server-side. **V1 has no usernames** (planned for V2). Writes must check and insert as one atomic step (file lock or single-writer queue) so two simultaneous signups cannot both pass.
 - `POST /api/rp-signature`: accepts only `WORLD_ACTION_REGISTER`, otherwise `400 bad-action`. Uses `signRequest` with `RP_SIGNING_KEY`.
-- `POST /api/verify-proof`: calls `https://developer.world.org/api/v4/verify/{rp_id}`, extracts `nullifier`, checks the signal hash against `username|wallet`, then `registerBinding`. Returns `409` with `username-taken`, `worldid-reused`, or `wallet-reused`, and `400 verify-failed`.
+- `POST /api/verify-proof`: calls `https://developer.world.org/api/v4/verify/{rp_id}`, extracts `nullifier`, checks the signal hash against the lowercased `wallet`, then `registerBinding`. Returns `409` with `worldid-reused` or `wallet-reused`, and `400 verify-failed`.
 - Never return the nullifier to anyone but the verifying caller, and never log it in plain text.
 - Export a `getBinding(wallet)` and `getAllowlist()` helper for Agent 4 to consume (agreed with the Orchestrator).
 - **TDD:** failing test, minimal implementation, green test, commit.
@@ -116,7 +116,7 @@ Note: your brief asked for "4 agents" but described five roles (frontend, two ba
 - Writes go through the sponsor wallet or the bound wallet via the SDK `createEntity` with `ExpirationTime.fromDays(n)`. Only `days` in `{1, 7, 30}` is accepted for posts. Comments are fixed at 7 days.
 - Auth for writes: the caller must be a bound wallet in the registry. Extend and edit require `$owner` to equal the caller's wallet and a registry match, otherwise `403`.
 - Comments: the parent post must exist and be unexpired. Do **not** create comment edit or extend routes.
-- Feed: query only through the project schemas and filter by `ownedBy(allowlist)` plus `$expiresAt > now`. Sort newest first and split Live and Archived (cache in `data/cache.json`). Never trust `author` or `username` attributes from Arkiv alone. Resolve usernames from the registry.
+- Feed: query only through the project schemas and filter by `ownedBy(allowlist)` plus `$expiresAt > now`. Sort newest first and split Live and Archived (cache in `data/cache.json`). Never trust the `author` attribute from Arkiv alone. Authors are shown as the shortened `$owner` wallet (no usernames in V1).
 - Rate limit: 5 posts per day per bound wallet, returning `429`.
 - Body size: reject posts over 5KB. Convert blocks and days at 2s per block.
 - Depends on Agent 3's registry helpers. Do not re-implement them.
@@ -128,9 +128,9 @@ Note: your brief asked for "4 agents" but described five roles (frontend, two ba
 1. **Secrets:** `RP_SIGNING_KEY`, `ARKIV_ACCESS_KEY`, `SPONSOR_PRIVATE_KEY` appear only in server code. None appear in client bundles, `NEXT_PUBLIC_*`, responses, logs, or the repo. `.env.local` and `data/` are in `.gitignore`. Grep the built `.next/static` output for secret values and key names.
 2. **Schema tag and Arkiv internals:** `human-forum.posts.v1`, `human-forum.comments.v1`, the access key, RPC URLs with keys, and raw attribute names are not displayed in the UI or leaked in API responses beyond the agreed contract.
 3. **User info exposure:** nullifiers are never sent to other users or rendered. Registry data is never fully dumped. API responses expose only what PROMPT.md §8 defines. Wallets are shown only where the contract says so (`owner`).
-4. **Spoofing:** the feed filters by `ownedBy(allowlist)`. Test with a post under the same schema tag from an unbound wallet and confirm it is hidden. Usernames come from the registry, not from entity attributes.
+4. **Spoofing:** the feed filters by `ownedBy(allowlist)`. Test with a post under the same schema tag from an unbound wallet and confirm it is hidden. The author shown is the entity `$owner`, never an attribute.
 5. **AuthZ:** extend and edit return 403 for non-owners. Comments cannot be edited or extended through any route. Writes from unbound wallets are rejected.
-6. **Input validation:** server-side username regex, `days` allowlist, body size limit, JSON shape validation, and wallet address format.
+6. **Input validation:** `days` allowlist, body size limit, JSON shape validation, and wallet address format.
 7. **World ID integrity:** a single `WORLD_ACTION_REGISTER`, signal hash verified, no client-side RP signing, and no replay path that skips the 409 checks.
 8. **Abuse:** rate limit is enforced server-side and not bypassable by switching headers or clients.
 9. **Errors:** error messages are generic enough not to leak stack traces, file paths, or env values.
@@ -245,7 +245,7 @@ Docs: https://docs.arkiv.network/ (full index: https://docs.arkiv.network/llms.t
 - Extend: `walletClient.extendEntity({ entityKey, expiration })`. A duration counts **from now**, not from the current expiry (10 days left + `fromDays(30)` = 30 days, not 40). An earlier expiry is rejected. Do **not** set the `permissionlessExtension` flag on any entity.
 - Edit: there is no `updateEntity`. Use `patchEntity(schema, entityKey, { set: {...} })`. Do **not** set the `readonly` flag on posts.
 - Comments are never patched or extended by our code. Do not create those routes.
-- Read: `publicClient.select({...}).from(Schema).ownedBy(...)`. Anyone can write entities with our schema tag, so `ownedBy` is the trust filter. Usernames always come from the registry.
+- Read: `publicClient.select({...}).from(Schema).ownedBy(...)`. Anyone can write entities with our schema tag, so `ownedBy` is the trust filter. The displayed author is always `$owner`.
 - Expired entities are **not returned by queries**, and Arkiv emits no expiry event. So "Archived" cards can only come from our local cache (`data/cache.json`), and we drop entries ourselves using `$expiresAt`.
 - Pages hold at most 100 rows. Paginate with the documented `limit` / `next` / cursor API. Comment counts use `client.count().from(Comments).where(...)`.
 - Failures: catch `EntityMutationError` and map it to generic `403` or `404` responses. Never forward raw messages.
@@ -261,9 +261,9 @@ Docs: https://docs.world.org/world-id/idkit/integrate (index: https://docs.world
 - Packages: `@worldcoin/idkit` (React widget, Frontend) and `@worldcoin/idkit-core` (server signing from `@worldcoin/idkit-core/signing`). Use the latest `4.x`.
 - Env values from the Developer Portal: `app_id`, `rp_id`, `signing_key` (secret).
 - **RP signature (server only):** `signRequest({ signingKeyHex: process.env.RP_SIGNING_KEY!, action })` returns `{ sig, nonce, createdAt, expiresAt }`. The route responds with `{ sig, nonce, created_at, expires_at }` (snake_case, as the docs show). Never sign on the client.
-- **Client:** `IDKitRequestWidget` with `app_id`, `action`, `rp_context` (`rp_id`, `nonce`, `created_at`, `expires_at`, `signature`), `allow_legacy_proofs={true}`, `preset={orbLegacy({ signal })}` where `signal = username|wallet`. Use `environment="staging"` only for the simulator. Run the backend check in `handleVerify` and throw when it fails. Do UI updates in `onSuccess`.
+- **Client:** `IDKitRequestWidget` with `app_id`, `action`, `rp_context` (`rp_id`, `nonce`, `created_at`, `expires_at`, `signature`), `allow_legacy_proofs={true}`, `preset={orbLegacy({ signal })}` where `signal = wallet` (lowercased). Use `environment="staging"` only for the simulator. Run the backend check in `handleVerify` and throw when it fails. Do UI updates in `onSuccess`.
 - **Verify (server):** forward the IDKit result **as-is** (no remapping) to `POST https://developer.world.org/api/v4/verify/{rp_id}`. Use `rp_id` from server env (`WORLD_RP_ID`), never from the client. Reject any `idkitResponse.environment` that differs from the backend's expected environment before calling the API, and require the verify response to have `success === true` and a matching `environment`. Return `400 verify-failed` otherwise.
-- **Signal check:** compare the signal hash in the response with the hash of `username|wallet`. The docs state the backend must enforce the same signal value. Confirm the exact hashing in the docs before implementing, and add a test with a tampered signal.
+- **Signal check:** compare the signal hash in the response with the hash of the lowercased `wallet`. The docs state the backend must enforce the same signal value. Confirm the exact hashing in the docs before implementing, and add a test with a tampered signal.
 - **Nullifier:** comes from `responses[].nullifier` as a 0x hex string for a 256-bit integer. Normalize it (convert to a number or canonical lowercase form) before the UNIQUE check, because casing differences can create a bypass. Scope uniqueness by `action`.
 - Never log the nullifier or the proof.
 

@@ -1,0 +1,774 @@
+[
+  {
+    "coverage_id": "app%2Fsignup%2Fpage.tsx%23signup-verify-flow::lib%2Fworldid%2Fverify.ts%23verifyProof-binding::app%2Blib%2Fworldid%2Blib%2Fregistry::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "app/signup/page.tsx#signup-verify-flow",
+      "boundary": "lib/worldid/verify.ts#verifyProof-binding",
+      "subsystem": "app+lib/worldid+lib/registry",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "app/signup/page.tsx#signup-verify-flow",
+    "boundary": "lib/worldid/verify.ts#verifyProof-binding",
+    "subsystem": "app+lib/worldid+lib/registry",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "app/signup/page.tsx",
+      "app/api/verify-proof/route.ts",
+      "lib/worldid/verify.ts",
+      "lib/registry/store.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Account linking and identity collision"
+    ],
+    "excluded_blocks": [],
+    "prior_status": "prior_covered_changed_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-a",
+    "reviewed_paths": [
+      "app/signup/page.tsx",
+      "app/api/verify-proof/route.ts",
+      "lib/worldid/verify.ts",
+      "lib/registry/store.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/signup/page.tsx",
+          "app/api/verify-proof/route.ts",
+          "lib/worldid/verify.ts",
+          "lib/registry/store.ts"
+        ],
+        "invariant": "wallet bound only when World confirms proof signal equals wallet; absent signal_hash must fail closed",
+        "method": "source",
+        "result": "source-only: signal pre-check vacuous on absent signal_hash; no World-returned signal field; World API signal enforcement not source-visible",
+        "artifact": null
+      },
+      {
+        "agent_id": "verifier-1",
+        "reviewed_paths": [
+          "app/signup/page.tsx",
+          "lib/worldid/verify.ts",
+          "lib/registry/store.ts"
+        ],
+        "invariant": "binding requires proven wallet control; World signal/action confirmed fail-closed",
+        "method": "source",
+        "result": "Phase-3: manual paste + format-only + fail-open signal/action gates; permanent wallet-reused lockout confirmed",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "forum/signup-bind-without-wallet-ownership"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fsignup%2Fpage.tsx%23manual-address-binding::lib%2Fregistry%2Fstore.ts%23register-uniqueness::app%2Blib%2Fregistry::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "app/signup/page.tsx#manual-address-binding",
+      "boundary": "lib/registry/store.ts#register-uniqueness",
+      "subsystem": "app+lib/registry",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "app/signup/page.tsx#manual-address-binding",
+    "boundary": "lib/registry/store.ts#register-uniqueness",
+    "subsystem": "app+lib/registry",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "app/signup/page.tsx",
+      "lib/worldid/verify.ts",
+      "lib/registry/store.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Account linking and identity collision"
+    ],
+    "excluded_blocks": [],
+    "prior_status": "prior_confirmed_same_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "verifier-1",
+    "reviewed_paths": [
+      "app/signup/page.tsx",
+      "lib/worldid/verify.ts",
+      "lib/registry/store.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "verifier-1",
+        "reviewed_paths": [
+          "app/signup/page.tsx",
+          "lib/worldid/verify.ts",
+          "lib/registry/store.ts"
+        ],
+        "invariant": "signup binds only wallet proven to be prover-controlled; World-confirmed signal/action match claimed wallet, fail closed",
+        "method": "source",
+        "result": "Phase-3 re-read: manual paste + format-only check + fail-open signal/action gates; binding without ownership proof confirmed",
+        "artifact": null
+      },
+      {
+        "agent_id": "verifier-1",
+        "reviewed_paths": [
+          "app/signup/page.tsx",
+          "lib/worldid/verify.ts",
+          "lib/registry/store.ts"
+        ],
+        "invariant": "binding requires proven wallet control; World signal/action confirmed fail-closed",
+        "method": "source",
+        "result": "Phase-3: manual paste + format-only + fail-open signal/action gates; permanent wallet-reused lockout confirmed",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "forum/signup-bind-without-wallet-ownership"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fapi%2Frp-signature%2Froute.ts%23POST%20%2Fapi%2Frp-signature::lib%2Fworldid%2Fverify.ts%23signRequest-server-only::app%2Fapi%2Blib%2Fworldid::ATTACK-CLASSES.md%23Obvious%20things",
+    "canonical_refs": {
+      "surface": "app/api/rp-signature/route.ts#POST /api/rp-signature",
+      "boundary": "lib/worldid/verify.ts#signRequest-server-only",
+      "subsystem": "app/api+lib/worldid",
+      "attack_class": "ATTACK-CLASSES.md#Obvious things"
+    },
+    "surface": "app/api/rp-signature/route.ts#POST /api/rp-signature",
+    "boundary": "lib/worldid/verify.ts#signRequest-server-only",
+    "subsystem": "app/api+lib/worldid",
+    "attack_class": "ATTACK-CLASSES.md#Obvious things",
+    "starting_paths": [
+      "app/api/rp-signature/route.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Obvious things",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "prior_covered_same_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-a",
+    "reviewed_paths": [
+      "app/api/rp-signature/route.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/rp-signature/route.ts"
+        ],
+        "invariant": "RP signing server-only, action-allowlisted, no secret leak",
+        "method": "source",
+        "result": "holds: exact action match, server-only signRequest, snake_case, no secret in response",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fworld-config%2Froute.ts%23GET%20%2Fapi%2Fworld-config::app%2Fapi%2Fworld-config%2Froute.ts%23public-identifiers-only::app%2Fapi::ATTACK-CLASSES.md%23Obvious%20things",
+    "canonical_refs": {
+      "surface": "app/api/world-config/route.ts#GET /api/world-config",
+      "boundary": "app/api/world-config/route.ts#public-identifiers-only",
+      "subsystem": "app/api",
+      "attack_class": "ATTACK-CLASSES.md#Obvious things"
+    },
+    "surface": "app/api/world-config/route.ts#GET /api/world-config",
+    "boundary": "app/api/world-config/route.ts#public-identifiers-only",
+    "subsystem": "app/api",
+    "attack_class": "ATTACK-CLASSES.md#Obvious things",
+    "starting_paths": [
+      "app/api/world-config/route.ts",
+      "app/signup/page.tsx"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Obvious things",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-a",
+    "reviewed_paths": [
+      "app/api/world-config/route.ts",
+      "app/signup/page.tsx"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/world-config/route.ts",
+          "app/signup/page.tsx"
+        ],
+        "invariant": "world-config exposes public identifiers only",
+        "method": "source",
+        "result": "holds: app_id/rp_id/action/environment only, 503 when unconfigured, env normalized",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fposts%2Froute.ts%23POST%20%2Fapi%2Fposts::lib%2Fregistry%2Fstore.ts%23getBinding-membership::app%2Fapi%2Blib%2Farkiv::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "app/api/posts/route.ts#POST /api/posts",
+      "boundary": "lib/registry/store.ts#getBinding-membership",
+      "subsystem": "app/api+lib/arkiv",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "app/api/posts/route.ts#POST /api/posts",
+    "boundary": "lib/registry/store.ts#getBinding-membership",
+    "subsystem": "app/api+lib/arkiv",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "app/api/posts/route.ts",
+      "app/api/comments/route.ts",
+      "app/api/posts/[key]/extend/route.ts",
+      "app/api/posts/[key]/edit/route.ts",
+      "lib/arkiv/manage.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "prior_confirmed_same_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "verifier-1",
+    "reviewed_paths": [
+      "app/api/posts/route.ts",
+      "app/api/comments/route.ts",
+      "app/api/posts/[key]/extend/route.ts",
+      "app/api/posts/[key]/edit/route.ts",
+      "lib/arkiv/manage.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "verifier-1",
+        "reviewed_paths": [
+          "app/api/posts/route.ts",
+          "app/api/comments/route.ts",
+          "app/api/posts/[key]/extend/route.ts",
+          "app/api/posts/[key]/edit/route.ts",
+          "lib/arkiv/manage.ts",
+          "lib/registry/store.ts"
+        ],
+        "invariant": "writes require proven wallet control, not self-claimed header",
+        "method": "source",
+        "result": "Phase-3 re-read: all four routes x-wallet + getBinding only; assertOwner string-compare; no signature/session",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "forum/write-auth-unverified-x-wallet-header"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fcomments%2Froute.ts%23POST%20%2Fapi%2Fcomments::lib%2Farkiv%2FrateLimit.ts%23checkAndRecord-posts-only::app%2Fapi%2Blib%2Farkiv::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "app/api/comments/route.ts#POST /api/comments",
+      "boundary": "lib/arkiv/rateLimit.ts#checkAndRecord-posts-only",
+      "subsystem": "app/api+lib/arkiv",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "app/api/comments/route.ts#POST /api/comments",
+    "boundary": "lib/arkiv/rateLimit.ts#checkAndRecord-posts-only",
+    "subsystem": "app/api+lib/arkiv",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "app/api/comments/route.ts",
+      "app/api/posts/route.ts",
+      "lib/arkiv/rateLimit.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "prior_confirmed_same_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "verifier-2",
+    "reviewed_paths": [
+      "app/api/comments/route.ts",
+      "app/api/posts/route.ts",
+      "lib/arkiv/rateLimit.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "verifier-2",
+        "reviewed_paths": [
+          "app/api/comments/route.ts",
+          "app/api/posts/route.ts",
+          "lib/arkiv/rateLimit.ts"
+        ],
+        "invariant": "comment writes throttled before sponsor-signed create",
+        "method": "source",
+        "result": "Phase-3 re-read: comments POST has no checkAndRecord; single production caller is posts",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "forum/comments-no-rate-limit"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "package.json%23dependencies::package.json%23next-14.2.18-postcss-range::repo-root::ATTACK-CLASSES.md%23Obvious%20things",
+    "canonical_refs": {
+      "surface": "package.json#dependencies",
+      "boundary": "package.json#next-14.2.18-postcss-range",
+      "subsystem": "repo-root",
+      "attack_class": "ATTACK-CLASSES.md#Obvious things"
+    },
+    "surface": "package.json#dependencies",
+    "boundary": "package.json#next-14.2.18-postcss-range",
+    "subsystem": "repo-root",
+    "attack_class": "ATTACK-CLASSES.md#Obvious things",
+    "starting_paths": [
+      "package.json",
+      "package-lock.json"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Obvious things",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "prior_confirmed_same_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "verifier-1",
+    "reviewed_paths": [
+      "package.json",
+      "package-lock.json"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "verifier-1",
+        "reviewed_paths": [
+          "package.json",
+          "package-lock.json"
+        ],
+        "invariant": "no pinned dependency with reachable advisory sink in production bundle",
+        "method": "source",
+        "result": "Phase-3: next 14.2.18 pin real but named advisories need Server Actions/next-image/middleware (absent) or dev server; postcss/esbuild/vite/vitest dev-only; rejected as confirmed, hygiene retained",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "lib%2Farkiv%2Ffeed.ts%23splitFeed-archived-loop::lib%2Farkiv%2Ffeed.ts%23upsertCache-no-allowlist-filter::lib%2Farkiv::ATTACK-CLASSES.md%23Feature%20abuse%20and%20data%20leakage",
+    "canonical_refs": {
+      "surface": "lib/arkiv/feed.ts#splitFeed-archived-loop",
+      "boundary": "lib/arkiv/feed.ts#upsertCache-no-allowlist-filter",
+      "subsystem": "lib/arkiv",
+      "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage"
+    },
+    "surface": "lib/arkiv/feed.ts#splitFeed-archived-loop",
+    "boundary": "lib/arkiv/feed.ts#upsertCache-no-allowlist-filter",
+    "subsystem": "lib/arkiv",
+    "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "starting_paths": [
+      "lib/arkiv/feed.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "selected_companion_blocks": [
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Search, cache, and index ACL drift"
+    ],
+    "excluded_blocks": [],
+    "prior_status": "prior_confirmed_changed_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-b",
+    "reviewed_paths": [
+      "lib/arkiv/feed.ts",
+      "app/api/posts/route.ts",
+      "app/api/comments/route.ts",
+      "tests/feed.test.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "lib/arkiv/feed.ts"
+        ],
+        "invariant": "archived cards satisfy same allowlist ACL as live",
+        "method": "source",
+        "result": "source-only: archived loop key-absence+expiry only; upsertCache unfiltered; probe entities exist",
+        "artifact": null
+      },
+      {
+        "agent_id": "verifier-2",
+        "reviewed_paths": [
+          "lib/arkiv/feed.ts",
+          "app/api/posts/route.ts",
+          "app/api/comments/route.ts",
+          "tests/feed.test.ts"
+        ],
+        "invariant": "archived cards satisfy same allowlist ACL as live",
+        "method": "source",
+        "result": "Phase-3: upsertCache unfiltered + archived loop no allowlist; spoof-cached-then-expired emits; suite 9/9",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "forum/feed-archived-allowlist-drift"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "lib%2Farkiv%2Ffeed.ts%23countComments::app%2Fapi%2Fcomments%2Froute.ts%23GET%20%2Fapi%2Fcomments-ownedBy::lib%2Farkiv::ATTACK-CLASSES.md%23Feature%20abuse%20and%20data%20leakage",
+    "canonical_refs": {
+      "surface": "lib/arkiv/feed.ts#countComments",
+      "boundary": "app/api/comments/route.ts#GET /api/comments-ownedBy",
+      "subsystem": "lib/arkiv",
+      "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage"
+    },
+    "surface": "lib/arkiv/feed.ts#countComments",
+    "boundary": "app/api/comments/route.ts#GET /api/comments-ownedBy",
+    "subsystem": "lib/arkiv",
+    "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "starting_paths": [
+      "lib/arkiv/feed.ts",
+      "app/api/comments/route.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "selected_companion_blocks": [
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Missing tenant or owner enforcement"
+    ],
+    "excluded_blocks": [],
+    "prior_status": "prior_confirmed_same_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "verifier-2",
+    "reviewed_paths": [
+      "lib/arkiv/feed.ts",
+      "app/api/comments/route.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "verifier-2",
+        "reviewed_paths": [
+          "lib/arkiv/feed.ts",
+          "app/api/comments/route.ts"
+        ],
+        "invariant": "counts scope to sponsor-owned displayable comments",
+        "method": "source",
+        "result": "Phase-3 re-read: countComments lacks .ownedBy, comments GET has it; divergence confirmed",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "forum/comment-count-missing-ownedBy"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fposts%2Froute.ts%23checkAndRecord-before-createEntity::lib%2Farkiv%2Fposts.ts%23createPostEntity::app%2Fapi%2Blib%2Farkiv::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "app/api/posts/route.ts#checkAndRecord-before-createEntity",
+      "boundary": "lib/arkiv/posts.ts#createPostEntity",
+      "subsystem": "app/api+lib/arkiv",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "app/api/posts/route.ts#checkAndRecord-before-createEntity",
+    "boundary": "lib/arkiv/posts.ts#createPostEntity",
+    "subsystem": "app/api+lib/arkiv",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "app/api/posts/route.ts",
+      "lib/arkiv/rateLimit.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "prior_confirmed_same_source",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "verifier-2",
+    "reviewed_paths": [
+      "app/api/posts/route.ts",
+      "lib/arkiv/rateLimit.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "verifier-2",
+        "reviewed_paths": [
+          "app/api/posts/route.ts",
+          "lib/arkiv/rateLimit.ts"
+        ],
+        "invariant": "failed chain write does not consume quota",
+        "method": "source",
+        "result": "Phase-3 re-read: checkAndRecord before createEntity, no rollback API",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "forum/ratelimit-record-before-write"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fposts%2F%5Bkey%5D%2Froute.ts%23GET%20%2Fapi%2Fposts%2F%5Bkey%5D::lib%2Farkiv%2Ffeed.ts%23fetchPostDetail-trust-filters::app%2Fapi%2Blib%2Farkiv::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "app/api/posts/[key]/route.ts#GET /api/posts/[key]",
+      "boundary": "lib/arkiv/feed.ts#fetchPostDetail-trust-filters",
+      "subsystem": "app/api+lib/arkiv",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "app/api/posts/[key]/route.ts#GET /api/posts/[key]",
+    "boundary": "lib/arkiv/feed.ts#fetchPostDetail-trust-filters",
+    "subsystem": "app/api+lib/arkiv",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "app/api/posts/[key]/route.ts",
+      "lib/arkiv/feed.ts",
+      "lib/types.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Missing tenant or owner enforcement"
+    ],
+    "excluded_blocks": [],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-b",
+    "reviewed_paths": [
+      "app/api/posts/[key]/route.ts",
+      "lib/arkiv/feed.ts",
+      "lib/types.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "app/api/posts/[key]/route.ts",
+          "lib/arkiv/feed.ts",
+          "lib/types.ts"
+        ],
+        "invariant": "thread read enforces key-shape + sponsor + allowlist + expiry, no oracle",
+        "method": "source",
+        "result": "holds: 0x64hex gate, ownedBy+eq key+allowlist+expiry, all miss paths 404",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "lib%2Farkiv%2FrateLimit.ts%23serialize-per-path-queue::lib%2Fregistry%2Fstore.ts%23register-idempotent-replay::lib%2Farkiv%2Blib%2Fregistry::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "lib/arkiv/rateLimit.ts#serialize-per-path-queue",
+      "boundary": "lib/registry/store.ts#register-idempotent-replay",
+      "subsystem": "lib/arkiv+lib/registry",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "lib/arkiv/rateLimit.ts#serialize-per-path-queue",
+    "boundary": "lib/registry/store.ts#register-idempotent-replay",
+    "subsystem": "lib/arkiv+lib/registry",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "lib/arkiv/rateLimit.ts",
+      "lib/registry/store.ts",
+      "tests/ratelimit.test.ts",
+      "tests/registry.test.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-b",
+    "reviewed_paths": [
+      "lib/arkiv/rateLimit.ts",
+      "lib/registry/store.ts",
+      "tests/ratelimit.test.ts",
+      "tests/registry.test.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "lib/arkiv/rateLimit.ts",
+          "lib/registry/store.ts"
+        ],
+        "invariant": "queue serializes without poisoning; replay grants no new capability",
+        "method": "source",
+        "result": "holds: per-path tail, rejection propagates, tail preserved; replay needs fresh World proof for identical pair",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fpost%2F%5Bkey%5D%2Fpage.tsx%23thread-body-render::app%2Fapi%2Fcomments%2Froute.ts%23GET%20%2Fapi%2Fcomments-body-decode::app%2Blib%2Farkiv::ATTACK-CLASSES.md%23Injection",
+    "canonical_refs": {
+      "surface": "app/post/[key]/page.tsx#thread-body-render",
+      "boundary": "app/api/comments/route.ts#GET /api/comments-body-decode",
+      "subsystem": "app+lib/arkiv",
+      "attack_class": "ATTACK-CLASSES.md#Injection"
+    },
+    "surface": "app/post/[key]/page.tsx#thread-body-render",
+    "boundary": "app/api/comments/route.ts#GET /api/comments-body-decode",
+    "subsystem": "app+lib/arkiv",
+    "attack_class": "ATTACK-CLASSES.md#Injection",
+    "starting_paths": [
+      "app/post/[key]/page.tsx",
+      "app/feed/page.tsx",
+      "app/api/comments/route.ts",
+      "lib/arkiv/feed.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Injection",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-b",
+    "reviewed_paths": [
+      "app/post/[key]/page.tsx",
+      "app/feed/page.tsx",
+      "app/api/comments/route.ts",
+      "lib/arkiv/feed.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "app/post/[key]/page.tsx",
+          "app/feed/page.tsx",
+          "app/api/comments/route.ts",
+          "lib/arkiv/feed.ts"
+        ],
+        "invariant": "attacker text never reaches executable sink; decode cannot 500 on attacker bytes",
+        "method": "source",
+        "result": "holds: JSX-escaped rendering, no dangerouslySetInnerHTML/href sinks; server TextEncoder write + non-throwing decode; only sponsor can sign comment entities",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "repo-root%23secrets-config-and-headers::.gitignore%23data-and-env-ignored::repo-root::ATTACK-CLASSES.md%23Obvious%20things",
+    "canonical_refs": {
+      "surface": "repo-root#secrets-config-and-headers",
+      "boundary": ".gitignore#data-and-env-ignored",
+      "subsystem": "repo-root",
+      "attack_class": "ATTACK-CLASSES.md#Obvious things"
+    },
+    "surface": "repo-root#secrets-config-and-headers",
+    "boundary": ".gitignore#data-and-env-ignored",
+    "subsystem": "repo-root",
+    "attack_class": "ATTACK-CLASSES.md#Obvious things",
+    "starting_paths": [
+      ".env.example",
+      "next.config.mjs",
+      "opencode.json",
+      ".gitignore",
+      "app/api/world-config/route.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Obvious things",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-c",
+    "reviewed_paths": [
+      ".env.example",
+      "next.config.mjs",
+      "opencode.json",
+      ".gitignore",
+      "app/api/world-config/route.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          ".env.example",
+          "next.config.mjs",
+          "opencode.json",
+          ".gitignore",
+          "app/api/world-config/route.ts",
+          "app/api",
+          "lib/arkiv/client.ts"
+        ],
+        "invariant": "no hardcoded secrets, debug endpoints, eval, CORS wildcard, cookies, open redirects, error leakage",
+        "method": "source",
+        "result": "11-item sweep pass: placeholders only, server-only env reads, no debug routes, no cookie/CORS surface, generic error codes, static server log strings",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fcomments%2Froute.ts%23GET%20%2Fapi%2Fcomments-list::lib%2Farkiv%2Fcomments.ts%23fetchParentPost-sponsor-check::app%2Fapi%2Blib%2Farkiv::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "app/api/comments/route.ts#GET /api/comments-list",
+      "boundary": "lib/arkiv/comments.ts#fetchParentPost-sponsor-check",
+      "subsystem": "app/api+lib/arkiv",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "app/api/comments/route.ts#GET /api/comments-list",
+    "boundary": "lib/arkiv/comments.ts#fetchParentPost-sponsor-check",
+    "subsystem": "app/api+lib/arkiv",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "app/api/comments/route.ts",
+      "lib/arkiv/comments.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Missing tenant or owner enforcement"
+    ],
+    "excluded_blocks": [],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 2,
+    "status": "covered",
+    "agent_id": "hunter-d",
+    "reviewed_paths": [
+      "app/api/comments/route.ts",
+      "lib/arkiv/comments.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-d",
+        "reviewed_paths": [
+          "app/api/comments/route.ts",
+          "lib/arkiv/comments.ts"
+        ],
+        "invariant": "comments GET enforces sponsor+allowlist+expiry; postKey cannot escape eq(); parent check interaction leaks nothing",
+        "method": "source",
+        "result": "covered: ownedBy+allowlist+expiry all present; eq() value-only; decode failures generic 500; hidden-parent comments need exact key and yield only allowlisted bodies",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  }
+]

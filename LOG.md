@@ -314,3 +314,13 @@
 - What: Hardening batch. Baseline security headers (config shape validated by executing it), README status 61/61 and limitations rewritten for signature auth (old S-001 x-wallet text removed), sweep clean on app/ and .next/static.
 - Evidence: build green, vitest 61/61, tsc clean.
 - Needs: user approval to push. SECURITY.md still describes pre-fix S-001; flagged as a handoff for the Security agent to refresh. Remaining owner-side work is NV-1 simulator key proof, NV-2 round trip, NV-3 deploy.
+
+## 2026-11-06 23:33 IST | Frontend | UI-batch | COMMITTED (push approval pending)
+- What: Picked up the interrupted UI session. Landed 5 uncommitted files as 320761d: (1) landing page is wallet-aware (bound users get Go-to-feed/New-post, visitors get Read-the-feed/Verify-to-participate); (2) SiteHeader re-reads the bound wallet on every route change so the visitor icon clears right after signup, and the header brand is logo-only (wordmark removed); (3) layout uses a flex-column body so the footer sticks to the bottom on short pages; (4) feed comment counts now count by the parent post entity key instead of the postKey column (was always 0), in lib/arkiv/feed.ts + app/api/posts/route.ts. Also deleted the session's leftover tests/scratch-count.test.ts (header-marked scratch, never for commit; it failed the suite run for missing env).
+- Evidence: tsc clean, vitest 61/61 across 10 files after scratch removal, `npm run build` green (feed 4.33 kB, thread 5.74 kB, signup 214 kB first load).
+- Needs: user approval to push 320761d (T-024 already on origin/master; only this commit is ahead). Next: new-post page UI work.
+
+## 2026-11-07 00:05 IST | Orchestrator | T-025 | VERIFIED (push approval pending)
+- What: Picked up the interrupted debug session. Both fixes verified live: feed returns commentCount 1 on "first post" (has a comment) and 0 on "second post" (none); chain-level proof that entity-key count finds 1 while postKey-column count finds 0. :3000 dev server recovered (was 500ing on a stale prod-built .next; user restarted it). Added T-025 to TIMELINE.
+- Evidence: live curl /api/posts, scratch chain test (deleted after), tsc clean, vitest 61/61, build green.
+- Needs: user approval to push (320761d plus this bookkeeping commit). Visual check of the new home CTA and header in the browser is yours.

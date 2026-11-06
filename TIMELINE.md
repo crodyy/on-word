@@ -3,7 +3,7 @@
 Last updated: 2026-11-06 22:00 IST
 
 ## Summary
-Done: 16 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 1
+Done: 17 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 1
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -32,6 +32,7 @@ Done: 16 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 1
 | T-022 | Audit run-2 HIGH signup wallet-ownership | Backend A | T-021 | DONE | verifyProof requires wallet signature over server nonce before register + fail-closed signal/action; verify-proof route passes signature/nonce; vitest 12/12 verify tests; lane note: signature tests use generated keys | 2026-11-06 |
 | T-023 | Frontend wallet-signing (signup + write pages) | Frontend | T-021, T-022 | DONE | injected-wallet only (manual paste removed), challenge+personal_sign on signup and all write pages via signedWriteHeaders; lane note: Backend pairing agent implemented, needs Frontend review; live simulator pass still required | 2026-11-06 |
 | T-024 | Hardening batch (headers, README, sweep) | Orchestrator | T-023 | DONE | baseline security headers in next.config.mjs (nosniff, referrer, SAMEORIGIN; HSTS/CSP stay deploy-time), README limits rewritten for signature auth, sweep clean: no schema tags/secrets/nullifiers in app/ or .next/static, no dangerouslySetInnerHTML | 2026-11-06 |
+| T-025 | Feed count + hero/header session fixes | Frontend | T-020, T-023 | DONE | countComments counts by parent entity key not postKey column (was always 0; live proof byEntity 1 vs byColumn 0, feed curl 1/0); home is wallet-aware (bound sees Go-to-feed/New-post); SiteHeader re-reads wallet on route change | 2026-11-06 |
 
 ## Milestones
 - [ ] M1 Registry + RP signature (T-003, T-005, T-016 partial)

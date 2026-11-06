@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { IDKitRequestWidget, orbLegacy, type IDKitResult } from "@worldcoin/idkit";
-import { ShieldCheck, Spinner, WarningCircle } from "@phosphor-icons/react";
-import { setBoundWallet } from "../lib/wallet";
+import { ShieldCheck, Spinner, Wallet, WarningCircle } from "@phosphor-icons/react";
+import { connectInjectedWallet, setBoundWallet, shortWallet } from "../lib/wallet";
 
 const APP_ID = (process.env.NEXT_PUBLIC_WORLD_APP_ID ?? "") as `app_${string}`;
 const ACTION = process.env.NEXT_PUBLIC_WORLD_ACTION ?? "human-forum-register-v1";
@@ -18,6 +18,7 @@ type RP = { sig: string; nonce: string; created_at: number; expires_at: number }
 
 export default function SignupPage() {
   const [wallet, setWallet] = useState("");
+  const [manual, setManual] = useState(false);
   const [rp, setRp] = useState<RP | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -26,10 +27,23 @@ export default function SignupPage() {
 
   const walletOk = /^0x[0-9a-fA-F]{40}$/.test(wallet.trim());
 
+  async function connect() {
+    setError(null);
+    setBusy(true);
+    try {
+      setWallet(await connectInjectedWallet());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not connect.");
+      setManual(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function start() {
     setError(null);
     if (!walletOk) {
-      setError("Enter your 0x wallet address first.");
+      setError("Connect your wallet first.");
       return;
     }
     setBusy(true);
@@ -91,18 +105,44 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <label htmlFor="wallet" className="mt-6 block text-sm font-medium">
-          Your wallet address
-        </label>
-        <input
-          id="wallet"
-          value={wallet}
-          onChange={(e) => setWallet(e.target.value)}
-          placeholder="0x..."
-          autoComplete="off"
-          spellCheck={false}
-          className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3 font-mono text-sm outline-none focus:border-[var(--color-accent)]"
-        />
+        <p className="text-sm font-medium">Your wallet</p>
+        {walletOk ? (
+          <div className="mt-2 flex items-center justify-between rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3">
+            <span className="font-mono text-sm" title={wallet}>{shortWallet(wallet.trim())}</span>
+            <button onClick={() => { setWallet(""); setManual(false); }} className="text-sm font-semibold underline">
+              Change
+            </button>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={connect}
+              disabled={busy}
+              className="btn-press mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--color-accent)] px-6 py-3 text-sm font-semibold disabled:opacity-70"
+            >
+              {busy ? <Spinner size={18} className="animate-spin" /> : <Wallet size={18} />}
+              Connect wallet
+            </button>
+            {manual ? (
+              <>
+                <label htmlFor="wallet" className="mt-4 block text-sm font-medium">Or paste your address</label>
+                <input
+                  id="wallet"
+                  value={wallet}
+                  onChange={(e) => setWallet(e.target.value)}
+                  placeholder="0x..."
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3 font-mono text-sm outline-none focus:border-[var(--color-accent)]"
+                />
+              </>
+            ) : (
+              <button onClick={() => setManual(true)} className="mt-3 text-sm font-medium underline">
+                No wallet extension? Paste an address instead
+              </button>
+            )}
+          </>
+        )}
         {error ? (
           <p role="alert" className="mt-2 text-sm font-medium text-red-700 dark:text-red-400">
             {error}

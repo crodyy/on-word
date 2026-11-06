@@ -229,3 +229,8 @@
 - What: Ran both audits per AGENTS.md section 5. M1: secrets gitignored and server-only, no secret names or schema tags or app nullifiers in .next/static (IDKit internals only), registry UNIQUE plus atomic writes, RP signing server-side with fixed action, verify path enforces env/action/signal_hash with 409 mapping, generic errors, no server logging. M2: spoof filter and 403s live-verified, validation and 5/day limit server-side, chain errors generic, no leaks in UI or responses. Wrote SECURITY.md: 1 HIGH (S-001, x-wallet impersonation of bound wallets, needs user waiver or V2 SIWE before T-008 DONE), 1 MED accepted (per-process queue), 1 LOW open (unshaped 500 on verify-network-throw), 1 INFO clean.
 - Evidence: grep scans of app/, lib/, .next/static; live curl evidence from T-009/T-011; SECURITY.md table.
 - Needs: commit; push approval; user decision on S-001.
+
+## 2026-11-06 16:00 IST | Frontend | T-012 | IN_REVIEW
+- What: User asked for a Connect-wallet button instead of manual address entry. Added connectInjectedWallet (EIP-1193 eth_requestAccounts, no new deps) plus a manual paste fallback for browsers without an extension. Signup now: Connect wallet (outline) or paste link, connected address shown shortened with Change, then Verify with World ID. Screenshot-reviewed clean.
+- Evidence: tsc clean, build green, 1440px screenshot reviewed.
+- Needs: commit; push approval (two commits pending: security audit plus this).

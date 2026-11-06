@@ -1,0 +1,791 @@
+[
+  {
+    "conditions": [
+      {
+        "description": "None required: feed counts are served to anonymous readers.",
+        "kind": "authentication_level"
+      },
+      {
+        "description": "A foreign-owner same-tag entity carries a duplicated postKey.",
+        "kind": "data_state"
+      }
+    ],
+    "confidence": {
+      "reason": "Direct code divergence between the two query paths, re-read on both sides; no other count path exists.",
+      "score": "high"
+    },
+    "description": "countComments counts all Comments rows matching a postKey without sponsor-ownership scoping, while the comments GET scopes to sponsor-owned, allowlisted, unexpired entities. Same-tag entities from other owners therefore inflate the per-post comment counts shown in the feed. Display-only; no body disclosure.",
+    "evidence": [
+      {
+        "description": "countComments counts by postKey with no .ownedBy scope.",
+        "file": "lib/arkiv/feed.ts",
+        "line": 186
+      },
+      {
+        "description": "Comments GET scopes .ownedBy(sponsor) plus allowlist plus expiry before display.",
+        "file": "app/api/comments/route.ts",
+        "line": 19
+      },
+      {
+        "description": "Feed calls countComments per live post to fill the displayed commentCount.",
+        "file": "app/api/posts/route.ts",
+        "line": 74
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Any party able to write same-tag entities (or none: counts diverge by construction).",
+      "instructions": [
+        "Write a Comments entity under the project schema tag from a non-sponsor owner with a duplicated postKey (or observe the divergence statically).",
+        "GET /api/posts and compare its commentCount against the thread comment list.",
+        "Observe the count exceeding the displayed list."
+      ],
+      "observed_result": "Code-divergence demonstration: the same postKey queried via both paths yields different sets by construction; impact is display-only count inflation.",
+      "payloads": [
+        "Comments entity with duplicated postKey from a non-sponsor owner"
+      ]
+    },
+    "fingerprint": "forum/comment-count-missing-ownedBy",
+    "intended_behavior": "Counts must count exactly the entities the thread view can display: sponsor-owned, allowlisted, unexpired comments for the postKey.",
+    "remediation": {
+      "strategy": "Scope countComments with .ownedBy(sponsor) and, where supported, allowlist/expiry parity; otherwise count client-side from the same filtered fetch the comments GET uses. Add a regression test with a foreign-owner same-postKey row asserting the count excludes it."
+    },
+    "root_cause": "countComments queries by postKey alone with no .ownedBy(sponsor) scope, diverging from the comments GET and the live-posts query, which both scope to sponsor-owned entities.",
+    "severity": {
+      "impact": {
+        "reason": "Display-only count inflation; no content disclosure or state change.",
+        "score": "low"
+      },
+      "likelihood": {
+        "reason": "Requires a foreign-owner same-tag entity with a duplicated postKey; anyone can write under the public tag.",
+        "score": "medium"
+      },
+      "overall_severity": "low"
+    },
+    "title": "Comment counts include other-owner same-tag entities",
+    "trace": [
+      {
+        "description": "Feed fills commentCount per live post via countComments.",
+        "file": "app/api/posts/route.ts",
+        "kind": "entrypoint",
+        "line": 74,
+        "scope": "GET /api/posts count fill"
+      },
+      {
+        "description": "Count query filters postKey only, counting foreign-owner rows.",
+        "file": "lib/arkiv/feed.ts",
+        "kind": "sink",
+        "line": 186,
+        "scope": "countComments"
+      }
+    ],
+    "verdict": "confirmed"
+  },
+  {
+    "conditions": [
+      {
+        "description": "Caller holds a registry-bound wallet (low World-staging barrier).",
+        "kind": "authentication_level"
+      },
+      {
+        "description": "An unexpired sponsor-owned parent post exists to attach comments to.",
+        "kind": "data_state"
+      }
+    ],
+    "confidence": {
+      "reason": "Complete path re-read: throttle present on posts, absent on comments; sponsor-signed write confirmed; no alternative throttle found.",
+      "score": "high"
+    },
+    "description": "POST /api/comments performs binding, shape, parent-exists and expiry checks, then a sponsor-signed createCommentEntity with no rate-limit call, while posts are capped at 5/day. One bound identity can therefore create unlimited sponsor-paid comment entities.",
+    "evidence": [
+      {
+        "description": "Full comments POST: binding, validation, parent checks, then sponsor-signed create with no checkAndRecord or 429 path.",
+        "file": "app/api/comments/route.ts",
+        "line": 56
+      },
+      {
+        "description": "Posts path records checkAndRecord before the chain write and maps RateLimitedError to 429.",
+        "file": "app/api/posts/route.ts",
+        "line": 38
+      },
+      {
+        "description": "checkAndRecord throws RateLimitedError over the daily limit; file-backed and restart-safe.",
+        "file": "lib/arkiv/rateLimit.ts",
+        "line": 54
+      },
+      {
+        "description": "Wallet client is built from the server sponsor account for every write.",
+        "file": "lib/arkiv/client.ts",
+        "line": 23
+      },
+      {
+        "description": "Comment entity created via the sponsor client with fixed 7-day expiry.",
+        "file": "lib/arkiv/comments.ts",
+        "line": 56
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "A bound identity converting registry membership into unbounded sponsor-paid writes.",
+      "instructions": [
+        "Bind a wallet via verify-proof and read any live post key from the feed.",
+        "POST /api/comments repeatedly with x-wallet set to the bound wallet and valid postKey/body.",
+        "Observe every request minting a sponsor-signed comment entity with no 429."
+      ],
+      "observed_result": "Static reachability confirmed: every authenticated comment request reaches sponsor-signed createEntity without a preceding limit check and with no alternative throttle on the path; each success is a sponsor-paid write.",
+      "payloads": [
+        "POST /api/comments headers {x-wallet: <bound wallet>} body {postKey, body} repeated beyond 5/day"
+      ]
+    },
+    "fingerprint": "forum/comments-no-rate-limit",
+    "intended_behavior": "Comments must be throttled per bound wallet (own limit and window, e.g. comments-specific daily cap) before the chain write, returning 429 on excess, so sponsor gas spend stays bounded.",
+    "remediation": {
+      "strategy": "Add checkAndRecord with a separate comments limit/path before createCommentEntity, mapping RateLimitedError to 429; consider an additional per-post cap. Add a regression test posting 6 comments rapidly and expecting the 6th to 429 without a chain write."
+    },
+    "root_cause": "The comments POST path omits the checkAndRecord call that the posts path enforces; no middleware, config, or alternative throttle covers comment creation, so each request proceeds directly to a sponsor-signed chain write.",
+    "severity": {
+      "impact": {
+        "reason": "Unbounded sponsor gas spend per bound identity; each comment is a paid chain write.",
+        "score": "medium"
+      },
+      "likelihood": {
+        "reason": "Requires one bound identity (low World-staging barrier) and any live post; then a simple loop.",
+        "score": "medium"
+      },
+      "overall_severity": "medium"
+    },
+    "title": "Comment creation has no throttle while posts do",
+    "trace": [
+      {
+        "description": "Bound-wallet gate, then validation and parent checks, with no throttle step.",
+        "file": "app/api/comments/route.ts",
+        "kind": "entrypoint",
+        "line": 56,
+        "scope": "POST /api/comments"
+      },
+      {
+        "description": "Parent post resolved and expiry-checked, still no limit recorded.",
+        "file": "app/api/comments/route.ts",
+        "kind": "propagation",
+        "line": 75,
+        "scope": "fetchParentPost"
+      },
+      {
+        "description": "Sponsor-signed comment entity minted unconditionally after checks.",
+        "file": "app/api/comments/route.ts",
+        "kind": "sink",
+        "line": 88,
+        "scope": "createCommentEntity"
+      }
+    ],
+    "verdict": "confirmed"
+  },
+  {
+    "claimed_root_cause": "Pinned dependency versions in an advisory-affected range without an upgrade.",
+    "description": "next is pinned at 14.2.18 and postcss/esbuild/vite/vitest sit in advisory ranges, but no named advisory has a reachable sink in this tree: the repo contains no Server Actions, no next/image usage, and no middleware.ts, so the Server-Action DoS, image-optimization cache-confusion, and middleware-redirect SSRF advisories do not apply; the dev-server origin-verification issue is dev-only and the postcss/vite/vitest items are build/dev-toolchain with no user-input sink. Version pins are real but unconfirmed as exploitable; retained as hygiene, not a finding.",
+    "evidence": [
+      {
+        "description": "next pinned exactly at 14.2.18.",
+        "file": "package.json",
+        "line": 19
+      },
+      {
+        "description": "Repo-wide grep finds no Server Actions, no next/image, no middleware file; empty next config with no headers.",
+        "file": "app",
+        "line": 1
+      },
+      {
+        "description": "Prior audit JSON lists advisories whose named components (Server Actions, image optimization, middleware, dev server) have no in-tree sink.",
+        "file": "security-audit/npm-audit.json",
+        "line": 1
+      }
+    ],
+    "fingerprint": "forum/deps-pinned-vulnerable-next",
+    "reason": "Version pin plus advisory-range membership alone does not meet the confirmation bar: no advisory ID, affected component, reachable sink, payload, or demonstrated cross-boundary impact was established from repo source. The named next advisories require components this tree does not use; toolchain advisories are dev-only. Downgraded to hygiene: upgrade next/postcss when convenient and re-audit with advisory IDs and reachability.",
+    "title": "Pinned next/postcss versions without reachable advisory sink",
+    "trace": [
+      {
+        "description": "Dependency pins declared, including next 14.2.18.",
+        "file": "package.json",
+        "kind": "entrypoint",
+        "line": 19,
+        "scope": "dependencies"
+      }
+    ],
+    "verdict": "rejected"
+  },
+  {
+    "conditions": [
+      {
+        "description": "None required: GET /api/posts is anonymous; any reader polling after expiry observes the card.",
+        "kind": "authentication_level"
+      },
+      {
+        "description": "A sponsor-owned unregistered-author row is cached while live, then expires out of chain queries.",
+        "kind": "data_state"
+      }
+    ],
+    "confidence": {
+      "reason": "Complete source-visible lineage (unfiltered ingest plus unfiltered archived emit versus filtered live), corroborated by in-repo acknowledgment of unregistered-author sponsor entities.",
+      "score": "high"
+    },
+    "description": "The live feed hides sponsor-owned entities with unregistered authors via the allowlist check, but upsertCache ingests those same rows into data/cache.json and the splitFeed archived loop re-emits them after expiry with no allowlist check. A post hidden from every reader during its lifetime becomes visible to anonymous readers in the archived section once it expires. Titles only; no nullifiers, proofs, or keys exposed.",
+    "evidence": [
+      {
+        "description": "Live arm enforces allowlist membership plus expiry.",
+        "file": "lib/arkiv/feed.ts",
+        "line": 99
+      },
+      {
+        "description": "Archived loop conditions are key-absence plus expiry only; no allowlist reference.",
+        "file": "lib/arkiv/feed.ts",
+        "line": 111
+      },
+      {
+        "description": "upsertCache merges every live row with no allowlist parameter or test.",
+        "file": "lib/arkiv/feed.ts",
+        "line": 128
+      },
+      {
+        "description": "fetchLivePosts selects all sponsor-owned Posts, so unregistered-author rows reach the cache.",
+        "file": "lib/arkiv/feed.ts",
+        "line": 151
+      },
+      {
+        "description": "Feed GET is anonymous, loads cache, splits, and persists the unfiltered cache write.",
+        "file": "app/api/posts/route.ts",
+        "line": 66
+      },
+      {
+        "description": "Source acknowledges sponsor-owned entities with unregistered authors exist.",
+        "file": "lib/arkiv/comments.ts",
+        "line": 30
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Anonymous reader with no wallet polling the public feed.",
+      "instructions": [
+        "Identify a sponsor-owned, unregistered-author entity title hidden from live posts.",
+        "Wait until its $expiresAt passes the current block.",
+        "GET /api/posts and read the archived array: the hidden title appears with expired:true."
+      ],
+      "observed_result": "Source-traced invariant break: the archived array contains the title/owner of a row the live array deliberately withholds under the same allowlist, i.e. disclosure of hidden-post content to an anonymous reader. Repo suite tests/feed.test.ts passes with live-hides-spoof behavior, confirming the live-side filter the archived side omits.",
+      "payloads": [
+        "GET /api/posts (no parameters, repeated until the unregistered-author row expires)"
+      ]
+    },
+    "fingerprint": "forum/feed-archived-allowlist-drift",
+    "intended_behavior": "Archived cards must satisfy the same trust filter as live (sponsor ownership plus registered author): cache only allowlisted rows at ingestion and re-check the allowlist at archived emit; unregistered-author rows must never appear in either list.",
+    "remediation": {
+      "strategy": "Pass the allowlist into upsertCache and skip non-member rows at ingestion, and add the same allowlist.has(author) test in the splitFeed archived loop; store the author explicitly in cached rows. Add a regression test that caches an unregistered-author row, advances past expiry, and asserts archived stays empty."
+    },
+    "root_cause": "Allowlist enforcement happens at live-render time only: upsertCache ingests all sponsor-owned rows and the archived loop tests only key-absence and expiry, so the derived cached copy drifts from the primary ACL.",
+    "severity": {
+      "impact": {
+        "reason": "Disclosure limited to post titles (and unregistered probe author addresses) of feed-hidden rows; no secrets or user PII.",
+        "score": "low"
+      },
+      "likelihood": {
+        "reason": "Deterministic once the data state holds; operator probes repeatedly create exactly that state and every feed GET performs the unfiltered cache write.",
+        "score": "medium"
+      },
+      "overall_severity": "low"
+    },
+    "title": "Feed archived path emits unregistered-author rows hidden while live",
+    "trace": [
+      {
+        "description": "Anonymous feed entry loads cache, splits live/archived, then persists the unfiltered live set.",
+        "file": "app/api/posts/route.ts",
+        "kind": "entrypoint",
+        "line": 66,
+        "scope": "GET /api/posts"
+      },
+      {
+        "description": "Every sponsor-owned row (author unfiltered) merged into the cache keyed by entity key.",
+        "file": "lib/arkiv/feed.ts",
+        "kind": "propagation",
+        "line": 128,
+        "scope": "upsertCache"
+      },
+      {
+        "description": "Cached row absent from live and past expiry pushed to archived with no allowlist test.",
+        "file": "lib/arkiv/feed.ts",
+        "kind": "sink",
+        "line": 111,
+        "scope": "splitFeed archived loop"
+      }
+    ],
+    "verdict": "confirmed"
+  },
+  {
+    "blockers": [
+      "Hosting, TLS, security headers, secret storage, and process topology live outside this repo and were not assessed."
+    ],
+    "claimed_root_cause": "Production deployment controls are not visible in source and cannot be assumed either way.",
+    "description": "Production deployment controls (hosting, TLS, security headers, secret storage, process topology) are outside this repo. next.config.mjs sets no headers; .env.local and data/ are gitignored. Nothing further is source-decidable.",
+    "evidence": [
+      {
+        "description": "Empty Next config: no headers, no redirects, no hardening.",
+        "file": "next.config.mjs",
+        "line": 1
+      },
+      {
+        "description": "Secrets and runtime data excluded from version control.",
+        "file": ".gitignore",
+        "line": 1
+      }
+    ],
+    "fingerprint": "forum/nv-production-deployment",
+    "title": "Production deployment controls unassessed",
+    "trace": [
+      {
+        "description": "Deployment target, ingress, and secret handling are selected outside the repo.",
+        "file": "next.config.mjs",
+        "kind": "entrypoint",
+        "line": 1,
+        "scope": "deployment config"
+      }
+    ],
+    "validation_plan": {
+      "deployment": "At deploy time: enforce TLS, set security headers, keep sponsor/RP keys server-side, single-instance process, keep the audit dir out of the image.",
+      "local": "Confirm .gitignore covers .env*, data/, and that no secret is referenced from client bundles."
+    },
+    "verdict": "needs_validation"
+  },
+  {
+    "blockers": [
+      "Whether the World v4 verify API rejects signal_hash-absent/mismatched proofs or echoes a verifiable signal tied to the proof: decisive for whether the fail-open pre-check is independently exploitable beyond the confirmed manual-paste vector."
+    ],
+    "claimed_root_cause": "RP signing key value correctness: local signRequest succeeds with any well-formed key, so the 200 from /api/rp-signature proves nothing about World-side trust.",
+    "description": "The World RP signing key value cannot be verified from source: local signing succeeds with any well-formed key, and only a live simulator pass proves World-side trust. Key format is valid (0x + 64 hex); actions and environments are consistent across server env, widget config, and fallbacks.",
+    "evidence": [
+      {
+        "description": "Server-only signRequest with RP_SIGNING_KEY; response carries no key material.",
+        "file": "app/api/rp-signature/route.ts",
+        "line": 1
+      },
+      {
+        "description": "Format valid and consistent; correctness of the value itself is not source-decidable.",
+        "file": ".env.example",
+        "line": 1
+      }
+    ],
+    "fingerprint": "forum/nv-rp-signing-key-value",
+    "title": "RP signing key value correctness needs a live simulator pass",
+    "trace": [
+      {
+        "description": "RP signature minted server-side and consumed by the World widget; trust decided World-side.",
+        "file": "app/api/rp-signature/route.ts",
+        "kind": "entrypoint",
+        "line": 1,
+        "scope": "POST /api/rp-signature"
+      }
+    ],
+    "validation_plan": {
+      "deployment": "Owner completes one simulator signup: POST /api/verify-proof 200 proves the key; a World-side decline before any backend call disproves it. Key material stays local, never pasted into chat or logs.",
+      "local": "Confirm key format (0x + 64 hex) and that WORLD_ACTION_REGISTER matches the portal action name."
+    },
+    "verdict": "needs_validation"
+  },
+  {
+    "blockers": [
+      "A human with World App/simulator plus a fresh wallet and identity is required; cannot be staged from source."
+    ],
+    "claimed_root_cause": "End-to-end behavior (signup, duplicate 409s, bound post/comment, owner extend/edit, 6th-post 429) needs a live round trip.",
+    "description": "The full round trip (signup 200, re-signup 409 worldid-reused, reused-wallet 409, bound post and comment, owner extend/edit success, 6th-post 429) remains unproven live. Unit and route tests cover each branch with mocks; the integrated chain-behavior proof needs a simulator pass.",
+    "evidence": [
+      {
+        "description": "Acceptance criteria for the round trip span signup, posts, comments, extend/edit, and rate limits.",
+        "file": "PROMPT.md",
+        "line": 71
+      }
+    ],
+    "fingerprint": "forum/nv-simulator-round-trip",
+    "title": "Simulator end-to-end round trip still pending",
+    "trace": [
+      {
+        "description": "Integrated signup-to-429 flow requires live World proofs and live chain writes.",
+        "file": "app/api/verify-proof/route.ts",
+        "kind": "entrypoint",
+        "line": 1,
+        "scope": "POST /api/verify-proof"
+      }
+    ],
+    "validation_plan": {
+      "deployment": "Owner runs the round trip on staging with fresh identity: signup 200, replay 409s, bound post/comment, owner extend/edit, 6th-post 429. Closes T-006/T-008/T-011/T-012.",
+      "local": "Existing suites (verify, registry, posts-route, comments-route, feed, ratelimit: 39/39) cover each branch with mocks."
+    },
+    "verdict": "needs_validation"
+  },
+  {
+    "conditions": [
+      {
+        "description": "Caller holds a bound wallet that passes validation and throttle.",
+        "kind": "authentication_level"
+      },
+      {
+        "description": "The subsequent chain write throws (mutation error or RPC failure) after the slot is recorded.",
+        "kind": "data_state"
+      }
+    ],
+    "confidence": {
+      "reason": "Straightforward ordering read with no alternative ordering or rollback path anywhere on the route.",
+      "score": "high"
+    },
+    "description": "POST /api/posts records the daily rate-limit hit before the chain write and never rolls it back on failure, so a failed or rejected transaction permanently consumes one of the caller's 5 daily slots. Availability/integrity nit; it cannot be used to bypass the limit.",
+    "evidence": [
+      {
+        "description": "checkAndRecord precedes createEntity with no compensation on the EntityMutationError path.",
+        "file": "app/api/posts/route.ts",
+        "line": 38
+      },
+      {
+        "description": "Rate module offers record-only semantics with no decrement or rollback API.",
+        "file": "lib/arkiv/rateLimit.ts",
+        "line": 54
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "A bound user (or their own failing client) observing quota loss; no attacker advantage.",
+      "instructions": [
+        "Submit a post that passes validation and throttle but whose createEntity throws (mutation error or RPC failure).",
+        "Observe the 403/throw response with the rate-file timestamp retained.",
+        "Repeat to exhaust 5/day with zero posts created."
+      ],
+      "observed_result": "Code-order demonstration: the failure path exits without touching the rate file, leaving the pre-recorded timestamp; repeated failures exhaust quota without creating posts.",
+      "payloads": [
+        "POST /api/posts with a body that passes validation but fails at chain-write time"
+      ]
+    },
+    "fingerprint": "forum/ratelimit-record-before-write",
+    "intended_behavior": "A failed chain write must not consume quota: record the hit after a successful write, or release the slot on write failure, while keeping the serialized check-and-act ordering.",
+    "remediation": {
+      "strategy": "Move checkAndRecord after successful createEntity (keeping the serialize queue against burst races) or add a releaseSlot compensation on write failure. Add a regression test with a failing chain client asserting quota is unchanged."
+    },
+    "root_cause": "The route records the rate-limit hit before the chain write and offers no rollback: the EntityMutationError branch maps to 403/throw without touching the rate file.",
+    "severity": {
+      "impact": {
+        "reason": "Quota loss on failed writes; bounded denial of own quota, no bypass or disclosure.",
+        "score": "low"
+      },
+      "likelihood": {
+        "reason": "Requires a write that passes checks but fails at chain time (RPC failure, mutation error).",
+        "score": "medium"
+      },
+      "overall_severity": "low"
+    },
+    "title": "Post rate slot burned before chain write with no rollback",
+    "trace": [
+      {
+        "description": "Throttle recorded before any chain interaction.",
+        "file": "app/api/posts/route.ts",
+        "kind": "entrypoint",
+        "line": 38,
+        "scope": "POST /api/posts throttle"
+      },
+      {
+        "description": "Chain write may throw after the slot is already persisted.",
+        "file": "app/api/posts/route.ts",
+        "kind": "propagation",
+        "line": 48,
+        "scope": "createPostEntity"
+      },
+      {
+        "description": "Failure maps to 403/throw with no rate-file compensation.",
+        "file": "app/api/posts/route.ts",
+        "kind": "sink",
+        "line": 56,
+        "scope": "EntityMutationError catch"
+      }
+    ],
+    "verdict": "confirmed"
+  },
+  {
+    "conditions": [
+      {
+        "description": "Attacker completes one own World verification while claiming the victim wallet string.",
+        "kind": "authentication_level"
+      },
+      {
+        "description": "Victim address is a valid unbound 0x address; attacker proof verifies under the attacker's own identity.",
+        "kind": "data_state"
+      },
+      {
+        "description": "Single successful bind permanently reserves the wallet; V1 has no unbind path.",
+        "kind": "system_configuration"
+      }
+    ],
+    "confidence": {
+      "reason": "Full trace from signup paste through verify-proof to registry; fail-open lines read directly; no wallet-signature or World-signal confirmation exists in the tree.",
+      "score": "high"
+    },
+    "description": "Signup lets the prover enter any address via manual paste and binds it to the prover's World nullifier on a format check only; the victim address is then permanently wallet-reused locked. Fail-open gaps compound it: an absent client signal_hash skips the local signal check, the server never confirms a World-returned signal against the claimed wallet, and an absent World action skips the action gate.",
+    "evidence": [
+      {
+        "description": "Manual paste-an-address fallback input when no wallet extension connects.",
+        "file": "app/signup/page.tsx",
+        "line": 145
+      },
+      {
+        "description": "handleVerify posts {idkitResponse, wallet} with no wallet signature.",
+        "file": "app/signup/page.tsx",
+        "line": 86
+      },
+      {
+        "description": "Wallet validated by regex format check only.",
+        "file": "lib/worldid/verify.ts",
+        "line": 59
+      },
+      {
+        "description": "Guarded comparison skips non-string signal_hash, so omitted fields pass with no binding check.",
+        "file": "lib/worldid/verify.ts",
+        "line": 69
+      },
+      {
+        "description": "VerifyApiSuccess shape has success/action/nullifier/results/environment but no World-returned signal field.",
+        "file": "lib/worldid/verify.ts",
+        "line": 26
+      },
+      {
+        "description": "Action mismatch rejected only when World returns a string action; omission passes.",
+        "file": "lib/worldid/verify.ts",
+        "line": 84
+      },
+      {
+        "description": "register serializes nullifier and wallet UNIQUE checks; wallet-reused reservation has no unbind path.",
+        "file": "lib/registry/store.ts",
+        "line": 88
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Malicious prover seeking to squat a victim wallet (permanent lockout) and impersonate it on writes.",
+      "instructions": [
+        "Paste the victim 0x address in the manual field and complete own World ID verification.",
+        "Submit verify-proof with own proof and the victim wallet (optionally with responses items omitting signal_hash).",
+        "Observe the binding created for the unowned wallet; the victim later receives 409 wallet-reused."
+      ],
+      "observed_result": "Source trace shows no wallet-ownership challenge and fail-open signal/action gates ending in a permanent store.register reservation; repo suite tests/verify.test.ts and tests/registry.test.ts pass, consistent with format-only wallet checks and UNIQUE enforcement without ownership proof.",
+      "payloads": [
+        "Signup UI: paste victim address, verify own World ID, submit {idkitResponse: own proof, wallet: victim}",
+        "Variant: responses:[{}] omitting signal_hash to skip the local signal check"
+      ]
+    },
+    "fingerprint": "forum/signup-bind-without-wallet-ownership",
+    "intended_behavior": "Registration must require proof of control of the claimed wallet (wallet-signed challenge over the World signal) and must match the World-confirmed signal and action to the claimed wallet server-side, failing closed on missing or mismatched fields.",
+    "remediation": {
+      "strategy": "Remove manual address entry (injected-wallet only) AND require a wallet signature over a server challenge before register(); enforce strict World-returned signal/action equality with the claimed wallet, rejecting missing fields. Add regression tests binding an unowned address and omitting signal_hash, both expecting failure."
+    },
+    "root_cause": "Binding conflates World-humanness proof with wallet ownership: verify-proof accepts a self-claimed wallet string, proves only that some human completed World verification, and registers nullifier-to-wallet without any wallet signature or World-verified signal binding; signal and action guards fail open on omitted fields.",
+    "severity": {
+      "impact": {
+        "reason": "Permanent V1 lockout of the victim wallet plus an attacker-held binding enabling full impersonation via write-auth.",
+        "score": "high"
+      },
+      "likelihood": {
+        "reason": "Manual paste is a first-class UI path; the attacker needs only one own World proof and any victim address.",
+        "score": "high"
+      },
+      "overall_severity": "high"
+    },
+    "title": "Signup binds arbitrary pasted wallet to prover nullifier without wallet-ownership proof",
+    "trace": [
+      {
+        "description": "Manual paste-an-address UI fallback supplies an attacker-chosen wallet string.",
+        "file": "app/signup/page.tsx",
+        "kind": "entrypoint",
+        "line": 145,
+        "scope": "SignupPage manual fallback"
+      },
+      {
+        "description": "Claimed wallet forwarded alongside the proof with no wallet signature.",
+        "file": "app/signup/page.tsx",
+        "kind": "propagation",
+        "line": 86,
+        "scope": "handleVerify"
+      },
+      {
+        "description": "Wallet validated by format regex only.",
+        "file": "lib/worldid/verify.ts",
+        "kind": "propagation",
+        "line": 59,
+        "scope": "verifyProof"
+      },
+      {
+        "description": "Expected signal derived from the claimed wallet but enforced only when the client supplied a string signal_hash.",
+        "file": "lib/worldid/verify.ts",
+        "kind": "propagation",
+        "line": 69,
+        "scope": "verifyProof signal pre-check"
+      },
+      {
+        "description": "Proof forwarded as-is to World; the claimed wallet is never sent for confirmation.",
+        "file": "lib/worldid/verify.ts",
+        "kind": "propagation",
+        "line": 76,
+        "scope": "World verify call"
+      },
+      {
+        "description": "Binding persisted for the claimed wallet on World success.",
+        "file": "lib/worldid/verify.ts",
+        "kind": "sink",
+        "line": 97,
+        "scope": "store.register"
+      },
+      {
+        "description": "Victim wallet permanently reserved; legitimate owner later gets wallet-reused 409.",
+        "file": "lib/registry/store.ts",
+        "kind": "sink",
+        "line": 100,
+        "scope": "register wallet-reused"
+      }
+    ],
+    "verdict": "confirmed"
+  },
+  {
+    "conditions": [
+      {
+        "description": "No per-request authentication beyond a self-claimed header; any network caller can present any bound wallet.",
+        "kind": "authentication_level"
+      },
+      {
+        "description": "Caller acts with the full authority of an arbitrary bound wallet, including owner-only extend and edit.",
+        "kind": "authorization_role"
+      },
+      {
+        "description": "Victim wallet must be registry-bound; addresses are public in the feed.",
+        "kind": "data_state"
+      }
+    ],
+    "confidence": {
+      "reason": "Complete source trace across all four routes plus manage.ts and store; no middleware, cookie, session, or signature control exists; feed confirms bound wallets are public.",
+      "score": "high"
+    },
+    "description": "All four write routes authorize solely on the client-supplied x-wallet header plus registry membership, with no wallet-ownership proof, session, or signature. Any caller that knows a bound wallet address (addresses are public in the feed) can post, comment, extend, and edit as that wallet.",
+    "evidence": [
+      {
+        "description": "x-wallet read plus getBinding-only gate; no other check on this path.",
+        "file": "app/api/posts/route.ts",
+        "line": 15
+      },
+      {
+        "description": "Identical x-wallet plus getBinding-only gate.",
+        "file": "app/api/comments/route.ts",
+        "line": 57
+      },
+      {
+        "description": "Identical x-wallet plus getBinding-only gate before owner check.",
+        "file": "app/api/posts/[key]/extend/route.ts",
+        "line": 12
+      },
+      {
+        "description": "Identical x-wallet plus getBinding-only gate before owner check.",
+        "file": "app/api/posts/[key]/edit/route.ts",
+        "line": 12
+      },
+      {
+        "description": "assertOwner string-compares the header wallet to post.author and re-checks getBinding; no signature.",
+        "file": "lib/arkiv/manage.ts",
+        "line": 34
+      },
+      {
+        "description": "getBinding looks up the lowercased wallet string only; no secret or signature verification.",
+        "file": "lib/registry/store.ts",
+        "line": 110
+      },
+      {
+        "description": "Feed sets the public owner/author display to the wallet, making bound wallets enumerable.",
+        "file": "lib/arkiv/feed.ts",
+        "line": 168
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Any network caller (World-verified or not) impersonating any bound wallet by setting a request header.",
+      "instructions": [
+        "Read any bound wallet address from the public feed owner or comment author fields.",
+        "Set x-wallet to that address and POST to /api/posts, /api/comments, /api/posts/<key>/extend, or /api/posts/<key>/edit with otherwise-valid bodies.",
+        "Observe writes and owner-only mutations succeed; no signing step is required or checked."
+      ],
+      "observed_result": "Source shows membership-only 403 gates (missing or unbound header rejected) and no ownership challenge on any write path; repo suite tests/posts-route.test.ts passes, consistent with 403 behavior driven only by header presence and registry membership, not proof of control.",
+      "payloads": [
+        "POST /api/posts headers {x-wallet: <victim bound wallet>} body {title, body, days}",
+        "POST /api/comments headers {x-wallet: <victim>} body {postKey, body}",
+        "POST /api/posts/<key>/extend and /edit headers {x-wallet: <victim owner>}"
+      ]
+    },
+    "fingerprint": "forum/write-auth-unverified-x-wallet-header",
+    "intended_behavior": "Each write must prove control of the bound wallet at request time (signed nonce/challenge or a session established at verify-proof), so knowledge of a public wallet address alone cannot authorize writes or owner-only extend/edit.",
+    "remediation": {
+      "strategy": "Bind writes to proven wallet control: require a wallet-signed nonce/challenge (or an authenticated session established at verify-proof) verified server-side on every write; keep x-wallet only as a hint, never as authority. Add regression tests posting as a bound wallet without the signature and expecting 403."
+    },
+    "root_cause": "Write-path authentication is a self-asserted identifier (x-wallet request header) checked only for registry membership; no per-request wallet signature, session binding to the World-verified prover, or server-side ownership challenge exists on any write path, and assertOwner re-checks the same header value.",
+    "severity": {
+      "impact": {
+        "reason": "Full impersonation: arbitrary posts/comments as victim plus owner-only extend/edit of victim posts, breaking human-only attribution and content integrity.",
+        "score": "high"
+      },
+      "likelihood": {
+        "reason": "Trivially exploitable by any caller; addresses are public in the feed and the header is fully attacker-controlled.",
+        "score": "high"
+      },
+      "overall_severity": "high"
+    },
+    "title": "Write routes authenticate solely via self-claimed x-wallet header",
+    "trace": [
+      {
+        "description": "Reads self-claimed x-wallet header; only getBinding membership checked before createPostEntity.",
+        "file": "app/api/posts/route.ts",
+        "kind": "entrypoint",
+        "line": 15,
+        "scope": "POST /api/posts"
+      },
+      {
+        "description": "Same x-wallet plus getBinding gate before createCommentEntity.",
+        "file": "app/api/comments/route.ts",
+        "kind": "entrypoint",
+        "line": 57,
+        "scope": "POST /api/comments"
+      },
+      {
+        "description": "Same x-wallet plus getBinding gate before fetchManagedPost and assertOwner.",
+        "file": "app/api/posts/[key]/extend/route.ts",
+        "kind": "entrypoint",
+        "line": 12,
+        "scope": "POST /api/posts/[key]/extend"
+      },
+      {
+        "description": "Same x-wallet plus getBinding gate before fetchManagedPost and assertOwner.",
+        "file": "app/api/posts/[key]/edit/route.ts",
+        "kind": "entrypoint",
+        "line": 12,
+        "scope": "POST /api/posts/[key]/edit"
+      },
+      {
+        "description": "getBinding resolves the header string to a binding with no secret verification.",
+        "file": "lib/registry/store.ts",
+        "kind": "propagation",
+        "line": 110,
+        "scope": "getBinding"
+      },
+      {
+        "description": "assertOwner compares stored author to the header wallet string and re-checks membership.",
+        "file": "lib/arkiv/manage.ts",
+        "kind": "propagation",
+        "line": 34,
+        "scope": "assertOwner"
+      },
+      {
+        "description": "Post created with binding.wallet derived from the header.",
+        "file": "app/api/posts/route.ts",
+        "kind": "sink",
+        "line": 48,
+        "scope": "createPostEntity"
+      },
+      {
+        "description": "Comment created with binding.wallet derived from the header.",
+        "file": "app/api/comments/route.ts",
+        "kind": "sink",
+        "line": 88,
+        "scope": "createCommentEntity"
+      }
+    ],
+    "verdict": "confirmed"
+  }
+]

@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { verifyMessage, type Hex } from "viem";
+import { kvNonceKey, resolveKv } from "../store/kv";
 
 export class ChallengeError extends Error {
   constructor(message: string) {
@@ -56,11 +57,19 @@ export interface ChallengeOptions {
 }
 
 // Issues a single-use nonce for the wallet. Re-issuing replaces the previous
-// one. Nonces expire after 10 minutes.
+// one. Nonces expire after 10 minutes. KV backend when configured, file
+// backend otherwise; the path is the file location and is ignored for KV.
 export async function issueChallenge(
   wallet: string,
   opts: ChallengeOptions,
 ): Promise<{ nonce: string; expiresAt: string }> {
+  const kv = resolveKv();
+  if (kv) {
+    const now = opts.now ?? Date.now();
+    const nonce = randomBytes(16).toString("hex");
+    await kv.set(kvNonceKey(wallet), nonce, { ex: Math.ceil(NONCE_TTL_MS / 1000) });
+    return { nonce, expiresAt: new Date(now + NONCE_TTL_MS).toISOString() };
+  }
   return serialize(opts.path, async () => {
     const now = opts.now ?? Date.now();
     const nonce = randomBytes(16).toString("hex");
@@ -77,12 +86,19 @@ export async function issueChallenge(
 }
 
 // Consumes the wallet's active nonce. Throws when there is none, it expired,
-// or it does not match. Consumption deletes it, so replays fail.
+// or it does not match. Consumption deletes it, so replays fail. The KV
+// compare-and-delete is atomic across serverless instances.
 export async function consumeChallenge(
   wallet: string,
   nonce: string,
   opts: ChallengeOptions,
 ): Promise<void> {
+  const kv = resolveKv();
+  if (kv) {
+    const deleted = await kv.compareDel(kvNonceKey(wallet), nonce);
+    if (deleted !== 1) throw new ChallengeError("bad challenge");
+    return;
+  }
   return serialize(opts.path, async () => {
     const now = opts.now ?? Date.now();
     const state = await readState(opts.path);

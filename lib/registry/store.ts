@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { KV_REGISTRY_NULLIFIERS, KV_REGISTRY_WALLETS, resolveKv, type KvLike } from "../store/kv";
 
 export type RegistryErrorCode =
   | "worldid-reused"
@@ -71,6 +72,11 @@ export interface RegistryStore {
 }
 
 export function createRegistryStore(path: string): RegistryStore {
+  // KV (Vercel) backend when configured: shared across serverless instances,
+  // atomic via HSETNX. The file backend below stays for local dev and tests.
+  // createRegistryStore is the seam every route uses, so no caller changes.
+  const kv = resolveKv();
+  if (kv) return createKvRegistryStore(kv);
   // Single-writer queue: check and insert run as one serialized step so two
   // simultaneous signups cannot both pass. Single-process V1; a lockfile
   // would be needed for multiple server instances.
@@ -122,11 +128,65 @@ export function createRegistryStore(path: string): RegistryStore {
 const fallbackPath = "./data/registry.json";
 
 let cachedDefault: { path: string; store: RegistryStore } | undefined;
+let cachedKvDefault: RegistryStore | undefined;
+
+// KV-backed registry: HSETNX on the nullifier hash is the atomic
+// check-and-insert, so simultaneous signups on different serverless
+// instances cannot both pass. Fail-closed on partial writes.
+export function createKvRegistryStore(kv: KvLike): RegistryStore {
+  return {
+    async register(entry) {
+      const nullifier = normalizeNullifier(entry.nullifier);
+      const wallet = normalizeWallet(entry.wallet);
+      const first = await kv.hsetnx(KV_REGISTRY_NULLIFIERS, nullifier, wallet);
+      if (first === 0) {
+        const owner = await kv.hget(KV_REGISTRY_NULLIFIERS, nullifier);
+        if (owner === wallet) {
+          const raw = await kv.hget(KV_REGISTRY_WALLETS, wallet);
+          if (raw) return JSON.parse(raw) as Binding;
+          return { nullifier, wallet, createdAt: new Date().toISOString() };
+        }
+        throw new RegistryError("worldid-reused", "this identity is already bound");
+      }
+      const second = await kv.hsetnx(
+        KV_REGISTRY_WALLETS,
+        wallet,
+        JSON.stringify({ nullifier, wallet, createdAt: new Date().toISOString() }),
+      );
+      if (second === 0) {
+        throw new RegistryError("wallet-reused", "this wallet is already bound");
+      }
+      const raw = await kv.hget(KV_REGISTRY_WALLETS, wallet);
+      return (JSON.parse(raw as string) as Binding);
+    },
+
+    async getBinding(wallet) {
+      const raw = await kv
+        .hget(KV_REGISTRY_WALLETS, wallet.toLowerCase())
+        .catch(() => null);
+      if (!raw) return undefined;
+      try {
+        return JSON.parse(raw) as Binding;
+      } catch {
+        return undefined;
+      }
+    },
+
+    async getAllowlist() {
+      return kv.hkeys(KV_REGISTRY_WALLETS).catch(() => []);
+    },
+  };
+}
 
 // Lazily bound so tests (and any host) can point REGISTRY_PATH at a scratch
 // file before first use. The instance is cached per path, preserving the
 // single-writer queue across requests sharing one path.
 export function getDefaultStore(): RegistryStore {
+  const kv = resolveKv();
+  if (kv) {
+    if (!cachedKvDefault) cachedKvDefault = createKvRegistryStore(kv);
+    return cachedKvDefault;
+  }
   const path = process.env.REGISTRY_PATH ?? fallbackPath;
   if (!cachedDefault || cachedDefault.path !== path) {
     cachedDefault = { path, store: createRegistryStore(path) };

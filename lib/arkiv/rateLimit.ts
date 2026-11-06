@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { kvRateKey, resolveKv } from "../store/kv";
 
 export class RateLimitedError extends Error {
   constructor() {
@@ -50,8 +51,19 @@ function serialize<T>(key: string, fn: () => Promise<T>): Promise<T> {
 }
 
 // Throws RateLimitedError when the wallet already posted `limit` times in the
-// window. Records the hit otherwise. File-backed so restarts keep counts.
+// window. Records the hit otherwise. File-backed so restarts keep counts;
+// KV-backed (shared across serverless instances) when configured. The path
+// selects the quota bucket in both backends.
 export async function checkAndRecord(wallet: string, opts: RateLimitOptions): Promise<void> {
+  const kv = resolveKv();
+  if (kv) {
+    const limit = opts.limit ?? MAX_POSTS_PER_DAY;
+    const windowMs = opts.windowMs ?? WINDOW_MS;
+    const now = opts.now ?? Date.now();
+    const count = await kv.rateHit(kvRateKey(opts.path, wallet), now, windowMs, limit);
+    if (count < 0) throw new RateLimitedError();
+    return;
+  }
   return serialize(opts.path, async () => {
     const limit = opts.limit ?? MAX_POSTS_PER_DAY;
     const windowMs = opts.windowMs ?? WINDOW_MS;
@@ -70,9 +82,17 @@ export async function checkAndRecord(wallet: string, opts: RateLimitOptions): Pr
 }
 
 // Frees one recorded hit for the wallet (compensation for a failed chain
-// write so it does not permanently burn daily quota). Serialized on the same
-// per-path queue as checkAndRecord.
+// write so it does not permanently burn daily quota). KV-backed when
+// configured, file backend otherwise; serialized on the same per-path queue
+// as checkAndRecord.
 export async function releaseSlot(wallet: string, opts: RateLimitOptions): Promise<void> {
+  const kv = resolveKv();
+  if (kv) {
+    const windowMs = opts.windowMs ?? WINDOW_MS;
+    const now = opts.now ?? Date.now();
+    await kv.rateRelease(kvRateKey(opts.path, wallet), now, windowMs);
+    return;
+  }
   return serialize(opts.path, async () => {
     const windowMs = opts.windowMs ?? WINDOW_MS;
     const now = opts.now ?? Date.now();

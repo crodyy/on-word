@@ -13,6 +13,7 @@
     "@arkiv-network/sdk": "^1.0.1",
     "@phosphor-icons/react": "^2.1.10",
     "@tailwindcss/postcss": "^4.3.4",
+    "@vercel/kv": "^3.0.0",
     "@worldcoin/idkit": "^4.0.0",
     "@worldcoin/idkit-core": "^4.0.0",
     "motion": "^14.9.1",

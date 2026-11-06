@@ -5,6 +5,7 @@ import { key as keyVal } from "@arkiv-network/sdk/schema";
 import type { Hex } from "viem";
 import { publicClient } from "./client";
 import { Comments, Posts } from "./schemas";
+import { KV_FEED_CACHE, resolveKv } from "../store/kv";
 
 export const BLOCK_SECONDS = 2;
 export const PAGE_LIMIT = 100;
@@ -78,6 +79,20 @@ export function emptyCache(): FeedCache {
 }
 
 export async function loadCache(path: string): Promise<FeedCache> {
+  // KV backend when configured: one shared key across serverless instances.
+  // The path is the file location and is ignored for KV.
+  const kv = resolveKv();
+  if (kv) {
+    const raw = await kv.get(KV_FEED_CACHE).catch(() => null);
+    if (!raw) return emptyCache();
+    try {
+      const parsed = JSON.parse(raw) as FeedCache;
+      if (!parsed || parsed.version !== 3 || !Array.isArray(parsed.posts)) return emptyCache();
+      return parsed;
+    } catch {
+      return emptyCache();
+    }
+  }
   try {
     const parsed = JSON.parse(await readFile(path, "utf8")) as FeedCache;
     // Version 2 cached rows without excerpts. Drop stale caches rather
@@ -90,7 +105,16 @@ export async function loadCache(path: string): Promise<FeedCache> {
   }
 }
 
+// Feed cache TTL: comfortably outlives the longest post lifetime (5 days)
+// plus archived viewing; rows carry their own expiry blocks regardless.
+const FEED_CACHE_TTL_S = 30 * 24 * 3600;
+
 export async function saveCache(path: string, cache: FeedCache): Promise<void> {
+  const kv = resolveKv();
+  if (kv) {
+    await kv.set(KV_FEED_CACHE, JSON.stringify(cache), { ex: FEED_CACHE_TTL_S });
+    return;
+  }
   await mkdir(dirname(path), { recursive: true });
   const tmp = `${path}.${process.pid}.tmp`;
   await writeFile(tmp, JSON.stringify(cache, null, 2), "utf8");

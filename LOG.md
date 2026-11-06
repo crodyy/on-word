@@ -44,3 +44,18 @@
 - What: All four files created under C:/on-word/arkiv/ (friction, reach, why-arkiv, how-you-use-arkiv). Verified: 4 files present; grep confirms no traction, deployment, user-number, or benchmark claims; how-you-use-arkiv carries an explicit specified-not-implemented status note; schemas, filters, expiration rules, and ownership match PROMPT.md sections 4/5/8 and the LOG.md entity-owner and allowlist DECISIONs. One present-tense line in friction.md corrected to specified-status. No app code touched, nothing pushed.
 - Evidence: `ls arkiv/` shows all four files; claim grep clean.
 - Needs: none. Awaiting user approval of the main plan (T-001 to T-018) separately.
+
+## 2026-11-06 12:58 IST | Orchestrator | T-019 | DECISION
+- What: User approved push of the completed docs/plan work ("push this"). Committed 6594b7f `feat(docs): arkiv hackathon feedback docs and orchestrator plan` (7 files: AGENTS.md, LOG.md, TIMELINE.md, arkiv/4). Left untracked: .agents/, skills-lock.json (skill-install artifacts), .env.example (pre-existed). First push attempt hung past 120s; retry succeeded. Push approved and complete.
+- Evidence: `git push --porcelain origin master` → 59ade6c..6594b7f Done.
+- Needs: none.
+
+## 2026-11-06 12:58 IST | Orchestrator | T-001 | STARTED
+- What: User approved starting the main plan ("then we start with the main plan"). T-001 scaffold begins: package.json, tsconfig, next.config, app stub, vitest config. lib/types.ts stays in T-004; page designs stay with Frontend.
+- Evidence: n/a (start).
+- Needs: npm install + npm run build green.
+
+## 2026-11-06 13:05 IST | Orchestrator | T-001 | DONE
+- What: Scaffold complete. Installed: next 14.2.18, @worldcoin/idkit 4.6.0, @arkiv-network/sdk 1.0.1 (spec guess 0.9.0 did not exist; resolved via npm view), viem 2.x, vitest 2.1.9. `npm run build` passes (static /, 87.2 kB first load). `npm run typecheck` clean. `npm test` reports no test files, expected, tests land in T-003.
+- Evidence: build output route table above; npm ls confirms versions.
+- Needs: push approval for this task's commit, then release T-002/T-003/T-004 (T-002 Backend B, T-003 Backend A, T-004 Orchestrator, all depend only on T-001).

@@ -3,12 +3,12 @@
 Last updated: 2026-11-06 12:43 IST
 
 ## Summary
-Done: 0 | In progress: 1 | In review: 0 | Blocked: 0 | Todo: 18
+Done: 2 | In progress: 0 | In review: 0 | Blocked: 0 | Todo: 17
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
 |-------|-----------------------------------|------------|------------|--------|--------------------------------|---------|
-| T-001 | Scaffold Next.js 14 TS app + deps | Orchestrator | -        | TODO   | `npm run build` passes; package.json holds next@14, react, typescript, @worldcoin/idkit, @worldcoin/idkit-core, viem, @arkiv-network/sdk, vitest | 2026-11-06 |
+| T-001 | Scaffold Next.js 14 TS app + deps | Orchestrator | -        | DONE   | `npm run build` passes; package.json holds next@14, react, typescript, @worldcoin/idkit, @worldcoin/idkit-core, viem, @arkiv-network/sdk, vitest | 2026-11-06 |
 | T-002 | Rabdi connectivity + sponsor funding | Backend B | T-001     | TODO   | `getBlockTiming` returns block on chain 7794095 (block number in LOG.md); sponsor address tGLM balance > 0 (user funds via https://hub.arkiv.network/faucet) | 2026-11-06 |
 | T-003 | Registry lib TDD (UNIQUE nullifier/wallet) | Backend A | T-001 | TODO | `vitest run` green: tests/registry.test.ts covers duplicate-nullifier reject, duplicate-wallet reject, lowercase normalize, atomic check+insert | 2026-11-06 |
 | T-004 | Shared TS contracts (lib/types.ts) | Orchestrator | T-001 | TODO | `npx tsc --noEmit` passes; types match PROMPT.md section 8 exactly | 2026-11-06 |

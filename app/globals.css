@@ -49,21 +49,6 @@ input::placeholder {
   transform: scale(0.98);
 }
 
-/* Strict black-and-white: the slider's dimmed disabled state would render
-   grey, so keep it solid and signal disabled with the cursor instead. */
-body .slide-commit[data-disabled] {
-  opacity: 1;
-}
-body .slide-commit[data-disabled] .slide-commit__track {
-  cursor: not-allowed;
-}
-
-/* Strict black-and-white: the track label ships dimmed. */
-body .slide-commit .slide-commit__text {
-  color: #ffffff;
-  opacity: 1;
-}
-
 .card-lift {
   transition: transform 160ms ease, box-shadow 160ms ease;
 }

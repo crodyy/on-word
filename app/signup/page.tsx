@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { IDKitRequestWidget, orbLegacy, type IDKitResult } from "@worldcoin/idkit";
 import { Spinner, Wallet, WarningCircle } from "@phosphor-icons/react";
-import SlideCommit from "../components/SlideCommit";
 import { connectInjectedWallet, setBoundWallet, shortWallet } from "../lib/wallet";
 
 const APP_ID = (process.env.NEXT_PUBLIC_WORLD_APP_ID ?? "") as `app_${string}`;
@@ -27,6 +26,7 @@ export default function SignupPage() {
   const [done, setDone] = useState(false);
 
   const walletOk = /^0x[0-9a-fA-F]{40}$/.test(wallet.trim());
+  const configured = APP_ID.length > 4 && RP_ID.length > 0;
 
   async function connect() {
     setError(null);
@@ -41,15 +41,27 @@ export default function SignupPage() {
     }
   }
 
-  async function fetchRp(): Promise<void> {
+  async function start() {
     setError(null);
-    const res = await fetch("/api/rp-signature", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: ACTION }),
-    });
-    if (!res.ok) throw new Error("Could not start verification. Try again.");
-    setRp(await res.json());
+    if (!walletOk) {
+      setError("Connect your wallet first.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/rp-signature", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: ACTION }),
+      });
+      if (!res.ok) throw new Error("Could not start verification. Try again.");
+      setRp(await res.json());
+      setOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start verification.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleVerify(result: IDKitResult): Promise<void> {
@@ -137,28 +149,23 @@ export default function SignupPage() {
           </p>
         ) : null}
 
-        <div className="mt-4">
-          <SlideCommit
-            label="Slide to verify"
-            doneLabel="Ready"
-            errorLabel="Could not start"
-            onConfirm={fetchRp}
-            onDone={() => setOpen(true)}
-            onError={(reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not start verification.")}
-            trackColor="#000000"
-            handleColor="#ffffff"
-            successColor="#000000"
-            dangerColor="#ffffff"
-            width={320}
-            height={56}
-            radius={28}
-            disabled={!walletOk || done}
-            icon={
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src="/world-mark.svg" alt="" width={24} height={24} />
-            }
-          />
-        </div>
+        {configured ? (
+        <button
+          onClick={start}
+          disabled={busy || !walletOk}
+          className="btn-press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] px-6 py-3 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed"
+        >
+          {busy ? <Spinner size={18} className="animate-spin" /> : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src="/world-mark.svg" alt="" width={20} height={20} className="invert" />
+          )}
+          Verify with World ID
+        </button>
+        ) : (
+          <p role="alert" className="mt-4 text-sm font-bold">
+            Verification is not configured yet. The site owner must set the World App ID and RP ID.
+          </p>
+        )}
 
         {done ? (
           <p className="mt-4 text-sm font-medium">

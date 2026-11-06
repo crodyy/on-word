@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { DM_Mono, Outfit } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
+import SiteHeader from "./components/SiteHeader";
 
-const sans = Outfit({ subsets: ["latin"], variable: "--font-sans" });
-const mono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Human-Only Forum",
@@ -12,10 +13,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={mono.variable} suppressHydrationWarning>
+      <head>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(function(){try{if(localStorage.getItem("human-forum.theme")==="dark"){document.documentElement.classList.add("dark")}}catch(e){}})()`}
+        </Script>
+      </head>
       <body>
+        <SiteHeader />
         <div className="mx-auto w-full max-w-3xl px-5 sm:px-8">{children}</div>
-        <footer className="mx-auto w-full max-w-3xl px-5 sm:px-8 pb-10 pt-6 text-sm text-[var(--color-muted)]">
+        <footer className="mx-auto w-full max-w-3xl px-5 sm:px-8 pb-10 pt-6 text-xs font-bold text-[var(--color-ink)]">
           <p>Human-Only Forum. Prototype on the Rabdi testnet.</p>
         </footer>
       </body>

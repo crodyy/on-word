@@ -10,13 +10,6 @@
   --radius-card: 14px;
 }
 
-.dark {
-  --color-paper: #000000;
-  --color-surface: #000000;
-  --color-ink: #ffffff;
-  --color-line: #ffffff;
-}
-
 html {
   background: var(--color-paper);
   color: var(--color-ink);
@@ -37,11 +30,6 @@ body {
 
 input::placeholder {
   color: #000000;
-  opacity: 1;
-}
-
-.dark input::placeholder {
-  color: #ffffff;
   opacity: 1;
 }
 

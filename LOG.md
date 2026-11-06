@@ -279,3 +279,13 @@
 - What: Pushed bac53ac to origin master (3fcb4bc..bac53ac) after user approval. You are on the latest.
 - Evidence: push porcelain output.
 - Needs: first real comment + thread-page screenshot check.
+
+## 2026-11-06 21:05 IST | Orchestrator | UI-trim | ROLLED BACK
+- What: User asked to fall back to the last push. Reset --hard to origin/master (e351be5), dropping unpushed commit 4cf5556 (paste-toggle/theme-button trim). Tree clean.
+- Evidence: git log shows e351be5, status clean except pre-existing untracked harness files.
+- Needs: nothing.
+
+## 2026-11-06 21:08 IST | Frontend | No-dark-mode | COMMITTED (push approval pending)
+- What: Removed dark mode completely: header toggle button, app/lib/theme.ts (deleted), theme-init blocking script and suppressHydrationWarning in layout, .dark variable overrides and .dark placeholder CSS. Single light theme only; no dark: variants existed.
+- Evidence: grep finds no theme/dark references outside Tailwind @theme; typecheck clean, vitest 39/39, build green.
+- Needs: user approval to push.

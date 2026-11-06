@@ -2,21 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Copy, Moon, SignOut, Sun, UserCircle } from "@phosphor-icons/react";
-import { applyTheme, getStoredTheme, toggleTheme, type Theme } from "../lib/theme";
+import { Check, Copy, SignOut, UserCircle } from "@phosphor-icons/react";
 import { getBoundWallet, setBoundWallet, shortWallet } from "../lib/wallet";
 
 export default function SiteHeader() {
-  const [theme, setTheme] = useState<Theme>("light");
   const [wallet, setWallet] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const stored = getStoredTheme();
-    setTheme(stored);
-    applyTheme(stored);
     setWallet(getBoundWallet());
   }, []);
 
@@ -61,15 +56,6 @@ export default function SiteHeader() {
         <span className="text-sm font-bold">Human-Only Forum</span>
       </Link>
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => setTheme(toggleTheme())}
-          aria-pressed={theme === "dark"}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="btn-press rounded-full border border-[var(--color-line)] p-2"
-        >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
         {wallet ? (
           <div className="relative" ref={menuRef}>
             <button

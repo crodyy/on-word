@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import SiteHeader from "./components/SiteHeader";
 
@@ -13,12 +12,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={mono.variable} suppressHydrationWarning>
-      <head>
-        <Script id="theme-init" strategy="beforeInteractive">
-          {`(function(){try{if(localStorage.getItem("human-forum.theme")==="dark"){document.documentElement.classList.add("dark")}}catch(e){}})()`}
-        </Script>
-      </head>
+    <html lang="en" className={mono.variable}>
       <body>
         <SiteHeader />
         <div className="mx-auto w-full max-w-3xl px-5 sm:px-8">{children}</div>

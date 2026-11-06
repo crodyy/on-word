@@ -5,8 +5,9 @@ Arkiv (Rabdi testnet) with paid lifetimes. Web3 hidden behind a Web2-feel UI.
 
 ## Status
 
-V1 is feature-complete and closed. All builds green: `vitest run` 32/32,
-`npx tsc --noEmit` clean, `npm run build` passes.
+V1 is feature-complete and closed. All builds green: `vitest run` 61/61,
+`npx tsc --noEmit` clean, `npm run build` passes. Write auth and signup are
+wallet-signature bound (run-2 HIGHs fixed, T-021 through T-023).
 
 What was proven live on Rabdi: chain connectivity plus funded sponsor, schema
 writes with transaction receipts (1-day post, 7-day comment with exact 302402-block
@@ -33,10 +34,14 @@ setup plus a simulator pass.
 - Expiration means disappearance from queries, not archival. The visible archive
   is the local `data/cache.json`, not chain history.
 - Key loss means permanent lockout. The World ID to wallet binding cannot change.
-- Write auth is a claimed `x-wallet` header checked against the registry (see
-  SECURITY.md S-001). A caller can act as any *bound* wallet. V2 moves to
-  per-action wallet signatures.
-- Single server instance. The registry and rate-limit queues are per process.
+- Every write and every signup proves wallet ownership: a fresh server nonce
+  signed with the bound key (personal_sign). The x-wallet header alone grants
+  nothing. Nonces are single-use with a 10-minute life.
+- Signup needs an injected wallet. There is no address-paste fallback.
+- The challenge endpoint issues nonces for any well-formed address, including
+  unbound ones (signup needs it). Issuance grants nothing without the key.
+- Single server instance. The registry, rate-limit, and nonce stores are files
+  with per-path serialized writes; they are not shared across instances.
 - Staging simulator only. No mainnet, no mobile native, no recovery flow.
 
 ## V2

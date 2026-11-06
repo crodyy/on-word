@@ -3,7 +3,7 @@
 Last updated: 2026-11-06 22:00 IST
 
 ## Summary
-Done: 15 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 2
+Done: 16 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 1
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -31,6 +31,7 @@ Done: 15 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 2
 | T-021 | Audit run-2 HIGH write-auth (wallet signature/session) | Backend A | T-020 | DONE | server write-auth: lib/auth/challenge (issue/consume/verify, 8 tests), GET /api/auth/challenge, all 4 write routes require fresh signature (bound wallet without signature 403s on all four, incl. new manage-route tests); vitest 57/57, tsc clean | 2026-11-06 |
 | T-022 | Audit run-2 HIGH signup wallet-ownership | Backend A | T-021 | DONE | verifyProof requires wallet signature over server nonce before register + fail-closed signal/action; verify-proof route passes signature/nonce; vitest 12/12 verify tests; lane note: signature tests use generated keys | 2026-11-06 |
 | T-023 | Frontend wallet-signing (signup + write pages) | Frontend | T-021, T-022 | DONE | injected-wallet only (manual paste removed), challenge+personal_sign on signup and all write pages via signedWriteHeaders; lane note: Backend pairing agent implemented, needs Frontend review; live simulator pass still required | 2026-11-06 |
+| T-024 | Hardening batch (headers, README, sweep) | Orchestrator | T-023 | DONE | baseline security headers in next.config.mjs (nosniff, referrer, SAMEORIGIN; HSTS/CSP stay deploy-time), README limits rewritten for signature auth, sweep clean: no schema tags/secrets/nullifiers in app/ or .next/static, no dangerouslySetInnerHTML | 2026-11-06 |
 
 ## Milestones
 - [ ] M1 Registry + RP signature (T-003, T-005, T-016 partial)

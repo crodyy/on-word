@@ -274,3 +274,8 @@
 - What: Full pre-push review per requesting-code-review (diff read, secret scan, typecheck, tests, build, independent reviewer subagent). Found and fixed 3 more bugs: (a) feed/thread showed the sponsor wallet as every post's author and isOwner was always false so Author controls never rendered — owner now maps to author, cache bumped v1 to v2 with migration; (b) comment POST always 404d because fetchParentPost filtered Posts.postKey by entity key — now reads the entity directly via getEntity with sponsor-ownership check; (c) rate-limit check-then-record race let concurrent posts slip past 5/day — per-path promise queue, new tests/ratelimit.test.ts. Left untracked harness artifacts (.agents/, skills-lock.json, next-env.d.ts) out of the commit.
 - Evidence: typecheck clean, vitest 39/39 (red-green on cache-migration and rate-race tests), build green with new routes, live curls: feed owner is the author wallet, thread endpoint returns the real post body, bogus comment parent 404s. Independent reviewer verdict passed, 4 non-blocking suggestions recorded for later.
 - Needs: user to post the first real comment (positive comment path not exercised live to avoid polluting their post) and screenshot-check the thread page. Dev servers still running on 3109/3111/3112; user can stop node processes when done.
+
+## 2026-11-06 20:53 IST | Orchestrator | Review-pass | PUSHED
+- What: Pushed bac53ac to origin master (3fcb4bc..bac53ac) after user approval. You are on the latest.
+- Evidence: push porcelain output.
+- Needs: first real comment + thread-page screenshot check.

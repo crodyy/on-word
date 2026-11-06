@@ -119,3 +119,8 @@
 - What: Wrote app/api/rp-signature/route.ts (server-side signRequest, snake_case response, 400 bad-action on action mismatch). Verified wrong action returns 400 bad-action by curl against production build. Correct action returns 500: direct signRequest probe throws "expected 32 bytes, got 20 bytes", so RP_SIGNING_KEY in .env.local is a 20-byte address, not the 32-byte signing key. Route code is correct; the env value is wrong. Also killed an orphan Next server holding port 3100 from the crashed session.
 - Evidence: curl wrong-action 400 bad-action; signRequest probe THREW invalid key; key probe len 42 with 0x (value never read).
 - Needs: user pastes the real 32-byte RP signing key (0x + 64 hex, shown once at RP creation in the Developer Portal) into .env.local as RP_SIGNING_KEY. Then re-run: build, start, curl good action expecting sig/nonce/created_at/expires_at.
+
+## 2026-11-06 13:50 IST | Orchestrator | T-005 | DONE
+- What: User replaced RP_SIGNING_KEY. Rebuilt, started production server on 3100, curl good action returns 200 with sig (132 chars), nonce, created_at/expires_at; wrong action returns 400 bad-action. Server stopped after check. T-005 DONE, unblocking T-006.
+- Evidence: curl 200 {sig, nonce, created_at:1793951476, expires_at:1793951776}; curl wrong-action 400 bad-action.
+- Needs: commit tracking; push approval for 2fbbbe0 + this; then T-006 (verify-proof, Backend A, deps T-003+T-005 now both DONE).

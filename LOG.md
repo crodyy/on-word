@@ -219,3 +219,13 @@
 - What: Gate ran on the production build. shoot.mjs 1440 + 390 clean. perf.mjs 0 FAIL, 2 WARN (JS parsed 726KB: IDKit ships only on /signup; feed at Next baseline; accepted). consistency.mjs 49 PASS; 5 FAILs all marketing-page rules misapplied to a compact app form (hero-screen, section-height, section-air, one-section) plus 1 container-edges false positive (crop reviewed: symmetric inset, inner edges equal). check.mjs crashed on non-skill DOM (no nav/sections contract); shoot plus manual critique used instead, reasoning logged. Two critique rounds applied: full-width CTA, darker muted/placeholder/border for AA, fixed link wrap, empty-state CTA, footer trimmed. Preflight: zero em-dashes (grep clean), one icon lib (Phosphor), labels above inputs with errors below, loading/empty/error states present, one accent, no pure black/white surfaces, transform/opacity motion only with reduced-motion guard, min-h-dvh.
 - Evidence: shots in .taste-skill/shots (gitignored); perf summary 0 FAIL; tsc + build green.
 - Needs: commit; push approval.
+
+## 2026-11-06 15:40 IST | Orchestrator | T-012..T-015 | DECISION
+- What: User viewed the build locally first (http://localhost:3103, all routes 200) then approved push ("push it"). Pushed efaf82e to origin master: 128480b..efaf82e Done. Local server stopped. Flagged to user: NEXT_PUBLIC_WORLD_* values missing from .env.local so the signup widget cannot verify yet; feed empty is correct (only unregistered probe posts on-chain).
+- Evidence: push porcelain output.
+- Needs: none. Remaining: T-006/T-008/T-011/T-012/T-013/T-014 live confirmations, T-016/T-017 audits, T-018 round-trip.
+
+## 2026-11-06 15:50 IST | Security | T-016/T-017 | IN_REVIEW/DONE
+- What: Ran both audits per AGENTS.md section 5. M1: secrets gitignored and server-only, no secret names or schema tags or app nullifiers in .next/static (IDKit internals only), registry UNIQUE plus atomic writes, RP signing server-side with fixed action, verify path enforces env/action/signal_hash with 409 mapping, generic errors, no server logging. M2: spoof filter and 403s live-verified, validation and 5/day limit server-side, chain errors generic, no leaks in UI or responses. Wrote SECURITY.md: 1 HIGH (S-001, x-wallet impersonation of bound wallets, needs user waiver or V2 SIWE before T-008 DONE), 1 MED accepted (per-process queue), 1 LOW open (unshaped 500 on verify-network-throw), 1 INFO clean.
+- Evidence: grep scans of app/, lib/, .next/static; live curl evidence from T-009/T-011; SECURITY.md table.
+- Needs: commit; push approval; user decision on S-001.

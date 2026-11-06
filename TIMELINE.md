@@ -3,7 +3,7 @@
 Last updated: 2026-11-06 12:43 IST
 
 ## Summary
-Done: 10 | In progress: 0 | In review: 5 | Blocked: 0 | Todo: 4
+Done: 11 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 2
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -23,8 +23,8 @@ Done: 10 | In progress: 0 | In review: 5 | Blocked: 0 | Todo: 4
 | T-013 | Feed screen | Frontend | T-004, T-009 | IN_REVIEW | feed with live/archived, countdown, comment counts, visitor banner, loading/empty/error states; needs live-post rendering check | 2026-11-06 |
 | T-014 | New-post + thread screens | Frontend | T-004, T-008, T-010, T-011 | IN_REVIEW | composer with 5KB guard + 1/7/30d radio; thread with countdown, owner controls, comments; needs live round-trip | 2026-11-06 |
 | T-015 | Taste-skill gate + preflight | Frontend | T-012, T-013, T-014 | DONE | shoot+perf 0 FAIL (2 WARN bundle size, reason logged); consistency 49 PASS, 5 marketing-rule FAILs with stated app-scope reasons; 2 critique rounds; preflight clean | 2026-11-06 |
-| T-016 | Security audit M1 (identity layer) | Security | T-006 | TODO | SECURITY.md findings for registry, rp-signature, verify-proof, secret handling; no open CRITICAL/HIGH or T-006 stays BLOCKED | 2026-11-06 |
-| T-017 | Security audit M2 (content layer) | Security | T-011, T-014 | TODO | SECURITY.md findings for spoof filter, authz 403s, rate limit, validation, UI/.next leak scan; no open CRITICAL/HIGH | 2026-11-06 |
+| T-016 | Security audit M1 (identity layer) | Security | T-006 | IN_REVIEW | audit done, SECURITY.md written; 1 HIGH open (S-001 auth transport, needs waiver/V2); T-006 stays IN_REVIEW | 2026-11-06 |
+| T-017 | Security audit M2 (content layer) | Security | T-011, T-014 | DONE | audit done, no CRITICAL/HIGH in content layer (S-001 tracked under T-016) | 2026-11-06 |
 | T-018 | Final build + fresh-identity round trip | Orchestrator | T-015, T-016, T-017 | TODO | `vitest run` green, `npm run build` passes, round trip works (signup, post, comment, extend, 409 x2, 403, 429), Security final sign-off, README caveats written | 2026-11-06 |
 | T-019 | Arkiv hackathon feedback docs (arkiv/*.md) | Orchestrator | - | DONE | four files exist under arkiv/; every technical claim cross-checked against PROMPT.md, AGENTS.md, LOG.md decisions; planned-vs-implemented clearly marked | 2026-11-06 |
 

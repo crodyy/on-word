@@ -49,8 +49,8 @@ describe("post validation", () => {
     expect(() => validatePostInput({ title: "t", body: "b", days: 9 })).toThrow();
     expect(() => validatePostInput({ title: "x".repeat(MAX_TITLE_BYTES + 1), body: "b", days: 1 })).toThrow();
     expect(() =>
-      validatePostInput({ title: "t", body: "x".repeat(MAX_BODY_BYTES + 1), days: 7 }),
+      validatePostInput({ title: "t", body: "x".repeat(MAX_BODY_BYTES + 1), days: 3 }),
     ).toThrow();
-    expect(() => validatePostInput({ title: "t", body: "b", days: 30 })).not.toThrow();
+    expect(() => validatePostInput({ title: "t", body: "b", days: 5 })).not.toThrow();
   });
 });

@@ -25,7 +25,7 @@ wallet), postKey `"9f3c..."` (server-generated), title `"Meeting notes"`, body a
   `rabdi({ accessKey: process.env.ARKIV_ACCESS_KEY })` over `http()`, chain id
   7794095.
 - Specified post creation: `walletClient.createEntity(Posts, values,
-  { expiration: ExpirationTime.fromDays(days) })` with days in `{1, 7, 30}`. Returns
+  { expiration: ExpirationTime.fromDays(days) })` with days in `{1, 3, 5}`. Returns
   `{ entityKey, expiresAt }`; the exact expiry block feeds the UI countdown.
 - Specified comment creation: same call on `Comments` with `fromDays(7)`, rejected
   unless the parent post exists and is unexpired.

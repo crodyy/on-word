@@ -4,7 +4,7 @@ import type { Hex } from "viem";
 import { getWalletClient } from "./client";
 import { Posts } from "./schemas";
 
-export const POST_LIFETIME_DAYS = [1, 7, 30] as const;
+export const POST_LIFETIME_DAYS = [1, 3, 5] as const;
 export type PostLifetime = (typeof POST_LIFETIME_DAYS)[number];
 
 export const MAX_TITLE_BYTES = 128;

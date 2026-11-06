@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getBoundWallet, signedWriteHeaders } from "../../lib/wallet";
 
-const DAYS = [1, 7, 30] as const;
+const DAYS = [1, 3, 5] as const;
 
 export default function NewPostPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [days, setDays] = useState<(typeof DAYS)[number]>(7);
+  const [days, setDays] = useState<(typeof DAYS)[number]>(3);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

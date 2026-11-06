@@ -39,7 +39,7 @@ describe("owner-only write routes without signature", () => {
       new Request("http://localhost/api/posts/0xkey/extend", {
         method: "POST",
         headers: headers(WALLET),
-        body: JSON.stringify({ days: 7 }),
+        body: JSON.stringify({ days: 3 }),
       }) as never,
       { params: { key: "0xkey" } } as never,
     );

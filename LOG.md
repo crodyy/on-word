@@ -324,3 +324,8 @@
 - What: Picked up the interrupted debug session. Both fixes verified live: feed returns commentCount 1 on "first post" (has a comment) and 0 on "second post" (none); chain-level proof that entity-key count finds 1 while postKey-column count finds 0. :3000 dev server recovered (was 500ing on a stale prod-built .next; user restarted it). Added T-025 to TIMELINE.
 - Evidence: live curl /api/posts, scratch chain test (deleted after), tsc clean, vitest 61/61, build green.
 - Needs: user approval to push (320761d plus this bookkeeping commit). Visual check of the new home CTA and header in the browser is yours.
+
+## 2026-11-07 00:07 IST | Frontend | Lifetime-135 | COMMITTED (push approval pending)
+- What: Post lifetime options changed from 1/7/30 to 1/3/5 per user direction. Updated the shared contract (lib/types.ts PostLifetimeDays), validation (lib/arkiv/posts.ts POST_LIFETIME_DAYS), new-post composer (DAYS + default 3), thread extend controls (type + default 3), feed empty-state copy, and tests (posting valid-day 5, manage-route extend day 3). Comments stay fixed at 7 days. AGENTS.md section 4 line 116 still says {1, 7, 30} (file is write-protected, needs Orchestrator edit); PROMPT.md spec sections still say 1/7/30, logged here as the contract deviation.
+- Evidence: tsc clean, vitest 61/61 across 10 files, `npm run build` green.
+- Needs: user approval to push (now 2 commits ahead: 320761d + this one).

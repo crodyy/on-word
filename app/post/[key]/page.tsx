@@ -21,7 +21,7 @@ export default function ThreadPage() {
   const [title, setTitle] = useState("");
   const [bodyText, setBodyText] = useState("");
   const [editing, setEditing] = useState(false);
-  const [extendDays, setExtendDays] = useState<1 | 7 | 30>(7);
+  const [extendDays, setExtendDays] = useState<1 | 3 | 5>(3);
 
   useEffect(() => {
     setWallet(getBoundWallet());
@@ -182,11 +182,11 @@ export default function ThreadPage() {
         <section className="mt-6 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-5" aria-label="Author controls">
           <h2 className="text-sm font-semibold">Author controls</h2>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {[1, 7, 30].map((d) => (
+            {[1, 3, 5].map((d) => (
               <button
                 key={d}
                 type="button"
-                onClick={() => setExtendDays(d as 1 | 7 | 30)}
+                onClick={() => setExtendDays(d as 1 | 3 | 5)}
                 aria-pressed={extendDays === d}
                 className={`btn-press rounded-full border px-4 py-1.5 text-sm font-semibold ${extendDays === d ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-paper)]" : "border-[var(--color-line)]"}`}
               >

@@ -22,7 +22,7 @@ export interface VerifyProofSuccess {
   nullifier: string;
 }
 
-export type PostLifetimeDays = 1 | 7 | 30;
+export type PostLifetimeDays = 1 | 3 | 5;
 
 export interface CreatePostRequest {
   title: string;

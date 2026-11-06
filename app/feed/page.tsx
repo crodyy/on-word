@@ -65,7 +65,7 @@ export default function FeedPage() {
         <div className="mt-6 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-8 text-center">
           <p className="text-lg font-medium">No live posts yet.</p>
           <p className="mt-2 text-xs font-bold">
-            {wallet ? "Be the first to post. Pick a lifetime of 1, 7, or 30 days." : "Verified humans have not posted yet. Check back soon."}
+            {wallet ? "Be the first to post. Pick a lifetime of 1, 3, or 5 days." : "Verified humans have not posted yet. Check back soon."}
           </p>
           {!wallet ? (
             <Link href="/signup" className="btn-press mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] px-6 py-3 text-sm font-bold text-[var(--color-paper)]">

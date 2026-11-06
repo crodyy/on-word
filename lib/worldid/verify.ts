@@ -23,10 +23,17 @@ interface IdkitResponse {
   responses?: IdkitResponseItem[];
 }
 
+interface VerifyApiResultItem {
+  success?: boolean;
+  nullifier?: string;
+  code?: string;
+}
+
 interface VerifyApiSuccess {
   success: true;
   action?: string;
   nullifier?: string;
+  results?: VerifyApiResultItem[];
   environment?: string;
 }
 
@@ -77,10 +84,18 @@ export async function verifyProof(
   if (typeof data.action === "string" && data.action !== expectedAction) {
     throw new VerifyError("verify-failed", "action mismatch");
   }
-  if (typeof data.nullifier !== "string") throw new VerifyError("verify-failed", "no nullifier");
+  // Top-level nullifier is present for most responses, but some flows only
+  // return per-result nullifiers inside results[]. Accept either.
+  const topNullifier = typeof data.nullifier === "string" ? data.nullifier : null;
+  const items = Array.isArray(data.results) ? data.results : [];
+  const okItem = items.find(
+    (r) => r && r.success === true && typeof r.nullifier === "string",
+  );
+  const nullifier = topNullifier ?? okItem?.nullifier ?? null;
+  if (typeof nullifier !== "string") throw new VerifyError("verify-failed", "no nullifier");
 
   try {
-    const binding = await store.register({ nullifier: data.nullifier, wallet });
+    const binding = await store.register({ nullifier, wallet });
     return { ok: true, nullifier: binding.nullifier };
   } catch (err) {
     if (err instanceof RegistryError && (err.code === "worldid-reused" || err.code === "wallet-reused")) {

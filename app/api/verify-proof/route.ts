@@ -30,6 +30,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<VerifyProofSu
     if (err instanceof VerifyError && err.code === "wallet-reused") {
       return NextResponse.json({ error: "wallet-reused" }, { status: 409 });
     }
+    // Server log carries the specific reason; the client stays generic.
+    // Never log the proof, nullifier, or wallet here.
+    const reason = err instanceof VerifyError ? err.message : "unexpected";
+    console.error(`[verify-proof] failed: ${reason}`);
     return NextResponse.json({ error: "verify-failed" }, { status: 400 });
   }
 }

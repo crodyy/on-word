@@ -1,18 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { IDKitRequestWidget, orbLegacy, type IDKitResult } from "@worldcoin/idkit";
 import { Spinner, Wallet, WarningCircle } from "@phosphor-icons/react";
 import { connectInjectedWallet, setBoundWallet, shortWallet } from "../lib/wallet";
+import type { WorldConfigResponse } from "@/lib/types";
 
-const APP_ID = (process.env.NEXT_PUBLIC_WORLD_APP_ID ?? "") as `app_${string}`;
-const ACTION = process.env.NEXT_PUBLIC_WORLD_ACTION ?? "human-forum-register-v1";
-const ENVIRONMENT = (process.env.NEXT_PUBLIC_WORLD_ENVIRONMENT ?? "staging") as
-  | "staging"
-  | "production"
-  | "sandbox";
-const RP_ID = process.env.NEXT_PUBLIC_WORLD_RP_ID ?? "";
+const FALLBACK_ACTION = "human-forum-register-v1";
 
 type RP = { sig: string; nonce: string; created_at: number; expires_at: number };
 
@@ -24,9 +19,33 @@ export default function SignupPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [cfg, setCfg] = useState<WorldConfigResponse | null>(null);
+  const [cfgFailed, setCfgFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/world-config")
+      .then((res) => {
+        if (!res.ok) throw new Error("not-configured");
+        return res.json() as Promise<WorldConfigResponse>;
+      })
+      .then((data) => {
+        if (!cancelled) setCfg(data);
+      })
+      .catch(() => {
+        if (!cancelled) setCfgFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const walletOk = /^0x[0-9a-fA-F]{40}$/.test(wallet.trim());
-  const configured = APP_ID.length > 4 && RP_ID.length > 0;
+  const configured = cfg !== null;
+  const APP_ID = cfg?.app_id ?? ("" as `app_${string}`);
+  const ACTION = cfg?.action ?? FALLBACK_ACTION;
+  const ENVIRONMENT = cfg?.environment ?? "staging";
+  const RP_ID = cfg?.rp_id ?? "";
 
   async function connect() {
     setError(null);
@@ -161,9 +180,13 @@ export default function SignupPage() {
           )}
           Verify with World ID
         </button>
-        ) : (
+        ) : cfgFailed ? (
           <p role="alert" className="mt-4 text-sm font-bold">
             Verification is not configured yet. The site owner must set the World App ID and RP ID.
+          </p>
+        ) : (
+          <p className="mt-4 text-sm font-medium" aria-live="polite">
+            Loading verification config.
           </p>
         )}
 

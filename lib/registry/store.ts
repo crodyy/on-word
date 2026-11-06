@@ -90,7 +90,11 @@ export function createRegistryStore(path: string): RegistryStore {
         const nullifier = normalizeNullifier(entry.nullifier);
         const wallet = normalizeWallet(entry.wallet);
         const data = await readRegistry(path);
-        if (data.bindings.some((b) => b.nullifier === nullifier)) {
+        const existing = data.bindings.find((b) => b.nullifier === nullifier);
+        if (existing) {
+          // Exact replay of the same identity + wallet: idempotent success so
+          // a retried verification does not surface as an error.
+          if (existing.wallet === wallet) return existing;
           throw new RegistryError("worldid-reused", "this identity is already bound");
         }
         if (data.bindings.some((b) => b.wallet === wallet)) {

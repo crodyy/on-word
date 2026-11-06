@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { desc } from "@arkiv-network/sdk/query";
+import { desc, eq } from "@arkiv-network/sdk/query";
+import { key as keyVal } from "@arkiv-network/sdk/schema";
 import type { Hex } from "viem";
 import { publicClient } from "./client";
 import { Comments, Posts } from "./schemas";
@@ -26,8 +27,30 @@ export interface FeedPost {
   expired: boolean;
 }
 
+export interface ThreadPostDetail {
+  key: string;
+  title: string;
+  body: string;
+  owner: string;
+  expiresAt: string;
+  expired: boolean;
+}
+
+// Decode a bytes-column cell (0x hex string, plain string, or byte array)
+// back to text. Pure so it can be unit-tested.
+export function decodeBodyCell(raw: unknown): string {
+  const v = raw !== null && typeof raw === "object" && "value" in raw
+    ? (raw as { value: unknown }).value
+    : raw;
+  if (typeof v === "string") {
+    if (!v.startsWith("0x")) return v;
+    return new TextDecoder().decode(Uint8Array.from(Buffer.from(v.slice(2), "hex")));
+  }
+  return new TextDecoder().decode(v as Uint8Array);
+}
+
 export interface FeedCache {
-  version: 1;
+  version: 2;
   posts: {
     key: string;
     title: string;
@@ -38,12 +61,16 @@ export interface FeedCache {
 }
 
 export function emptyCache(): FeedCache {
-  return { version: 1, posts: [] };
+  return { version: 2, posts: [] };
 }
 
 export async function loadCache(path: string): Promise<FeedCache> {
   try {
-    return JSON.parse(await readFile(path, "utf8")) as FeedCache;
+    const parsed = JSON.parse(await readFile(path, "utf8")) as FeedCache;
+    // Version 1 cached $owner (the sponsor) as the display owner. Version 2
+    // stores the author instead. Drop stale caches rather than show wrong authors.
+    if (!parsed || parsed.version !== 2 || !Array.isArray(parsed.posts)) return emptyCache();
+    return parsed;
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return emptyCache();
     throw err;
@@ -113,7 +140,7 @@ export function upsertCache(cache: FeedCache, live: ChainPost[]): FeedCache {
   seen.forEach((p) => {
     out.push(p);
   });
-  return { version: 1, posts: out };
+  return { version: 2, posts: out };
 }
 
 function colVal(v: unknown): string {
@@ -137,10 +164,14 @@ export async function fetchLivePosts(sponsor: Hex): Promise<{ posts: ChainPost[]
       .fetch();
     for (const e of page.entities) {
       const r = e as Record<string, unknown>;
+      const author = colVal(r.author);
       posts.push({
         key: String(r.$key),
-        owner: String(r.$owner),
-        author: colVal(r.author),
+        // User-facing owner is the author: $owner is always the sponsor
+        // wallet (it signs every write), so it must never be displayed.
+        // Server-side extend/edit checks use the author column (manage.ts).
+        owner: author,
+        author,
         postKey: colVal(r.postKey),
         title: colVal(r.title),
         expiresAtBlock: BigInt(String(r.$expiresAt)),
@@ -156,4 +187,46 @@ export async function countComments(postKey: string): Promise<number> {
   const { eq } = await import("@arkiv-network/sdk/query");
   const n = await publicClient.count().from(Comments).where(eq("postKey", postKey)).fetch();
   return Number(n);
+}
+
+// Single-post read for the thread view: same trust filters as the feed
+// (sponsor ownership + registered author + unexpired), plus the body.
+export async function fetchPostDetail(
+  entityKey: string,
+  sponsor: Hex,
+  allowlist: Set<string>,
+): Promise<ThreadPostDetail | undefined> {
+  const timing = await publicClient.getBlockTiming();
+  const page = await publicClient
+    .select({
+      $key: true,
+      $owner: true,
+      $expiresAt: true,
+      author: true,
+      postKey: true,
+      title: true,
+      body: true,
+    })
+    .from(Posts)
+    .ownedBy(sponsor)
+    .where(eq("$key", keyVal(entityKey as Hex)))
+    .limit(1)
+    .fetch();
+  if (page.entities.length === 0) return undefined;
+  const r = page.entities[0] as Record<string, unknown>;
+  const author = colVal(r.author);
+  if (!allowlist.has(author.toLowerCase())) return undefined;
+  const expiresAtBlock = BigInt(String(r.$expiresAt));
+  const expired = expiresAtBlock <= timing.currentBlock;
+  if (expired) return undefined;
+  return {
+    key: String(r.$key),
+    title: colVal(r.title),
+    body: decodeBodyCell(r.body),
+    owner: author,
+    expiresAt: new Date(
+      Date.now() + Number(expiresAtBlock - timing.currentBlock) * BLOCK_SECONDS * 1000,
+    ).toISOString(),
+    expired: false,
+  };
 }

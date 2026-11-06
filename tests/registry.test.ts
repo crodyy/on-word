@@ -96,4 +96,15 @@ describe("registry store", () => {
     const store = createRegistryStore(path);
     expect(await store.getBinding(WALLET_A)).toBeUndefined();
   });
+
+  it("treats an exact replay (same identity, same wallet) as idempotent", async () => {
+    const store = createRegistryStore(path);
+    const first = await store.register({ nullifier: NULLIFIER_A, wallet: WALLET_A });
+    const second = await store.register({
+      nullifier: NULLIFIER_A.toUpperCase(),
+      wallet: WALLET_A.toLowerCase(),
+    });
+    expect(second).toEqual(first);
+    expect(await store.getAllowlist()).toHaveLength(1);
+  });
 });

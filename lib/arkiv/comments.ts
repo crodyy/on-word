@@ -1,6 +1,5 @@
 import { ExpirationTime } from "@arkiv-network/sdk";
 import { addr } from "@arkiv-network/sdk/schema";
-import { eq } from "@arkiv-network/sdk/query";
 import type { Hex } from "viem";
 import { getWalletClient, publicClient } from "./client";
 import { getSponsorAddress } from "./client";
@@ -31,17 +30,27 @@ function colVal(v: unknown): string {
 // Parent must exist under our sponsor ownership and be unexpired. The
 // allowlist is deliberately NOT required here: comments on hidden posts stay
 // hidden with them, and the probe post (unregistered author) stays usable.
-export async function fetchParentPost(postKey: string): Promise<ParentPost | undefined> {
-  const page = await publicClient
-    .select({ $key: true, $expiresAt: true, author: true })
-    .from(Posts)
-    .ownedBy(getSponsorAddress())
-    .where(eq("postKey", postKey))
-    .limit(1)
-    .fetch();
-  if (page.entities.length === 0) return undefined;
-  const r = page.entities[0] as Record<string, unknown>;
-  return { key: String(r.$key), author: colVal(r.author), expiresAtBlock: BigInt(String(r.$expiresAt)) };
+// NOTE: callers pass the post's entity key ($key), not the postKey column
+// (a random id generated at creation). So this reads the entity directly
+// instead of filtering Posts.postKey, which would never match.
+export async function fetchParentPost(entityKey: string): Promise<ParentPost | undefined> {
+  try {
+    const e = (await publicClient.getEntity(
+      entityKey as Hex,
+      Posts,
+    )) as unknown as Record<string, unknown>;
+    if (String(e.$owner ?? "").toLowerCase() !== getSponsorAddress().toLowerCase()) {
+      return undefined;
+    }
+    if (!e.$key || !e.author || e.$expiresAt == null) return undefined;
+    return {
+      key: String(e.$key),
+      author: colVal(e.author),
+      expiresAtBlock: BigInt(String(e.$expiresAt)),
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 export async function createCommentEntity(input: {

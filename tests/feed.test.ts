@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  decodeBodyCell,
   emptyCache,
   loadCache,
   saveCache,
@@ -78,5 +79,36 @@ describe("feed split", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  it("migrates a stale version-1 cache file to empty", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "cache-test-"));
+    try {
+      const path = join(dir, "cache.json");
+      const { writeFile } = await import("node:fs/promises");
+      await writeFile(
+        path,
+        JSON.stringify({ version: 1, posts: [{ key: "0xold", title: "old", owner: "0xSponsor", postKey: "p", expiresAtBlock: "1" }] }),
+        "utf8",
+      );
+      expect(await loadCache(path)).toEqual(emptyCache());
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("decodeBodyCell", () => {
+  it("decodes 0x hex bytes cells", () => {
+    const hex = `0x${Buffer.from("hello post", "utf8").toString("hex")}`;
+    expect(decodeBodyCell({ value: hex })).toBe("hello post");
+  });
+
+  it("passes plain strings through", () => {
+    expect(decodeBodyCell({ value: "already text" })).toBe("already text");
+  });
+
+  it("decodes raw byte arrays", () => {
+    expect(decodeBodyCell(new TextEncoder().encode("raw bytes"))).toBe("raw bytes");
   });
 });

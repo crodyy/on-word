@@ -249,3 +249,28 @@
 - What: User approved push ("push it"). First attempt hit a transient connection reset; retry pushed 3fcb4bc: a57589c..3fcb4bc Done. Tree includes the slider revert.
 - Evidence: push porcelain output.
 - Needs: none.
+
+## 2026-11-06 19:39 IST | Backend A | Signup-config | DONE (backfilled)
+- What: Fixed "Verification is not configured yet" showing despite a correct .env.local. Root cause: signup page read only build-time NEXT_PUBLIC_WORLD_* vars, but .env.local held only server-side WORLD_* vars. Added GET /api/world-config serving public identifiers (app_id, rp_id, action, environment) from server env with NEXT_PUBLIC_* override; signup page fetches it at runtime. No secrets in response. Fixed misleading .env.example header comment.
+- Evidence: typecheck clean, vitest 32/32, live dev-server curl GET /api/world-config 200 with app_id/rp_id/action/environment from WORLD_* env alone.
+- Needs: commit; push approval (rule 10).
+
+## 2026-11-06 19:39 IST | Backend A | Verify-409 | DONE (backfilled)
+- What: User's QR verification showed app-side success but widget failure; server log showed POST /api/verify-proof 409, meaning the proof verified and the registry already held the binding (wallet 0x5369...5a38 bound 13:43 UTC, an earlier attempt had succeeded). Two changes: (a) verify.ts now also accepts the nullifier from results[0] per docs (some flows omit top-level nullifier); (b) route logs [verify-proof] failed with the specific safe reason server-side, client stays generic.
+- Evidence: typecheck clean, vitest 32/32 at the time; registry file shows the pre-existing binding.
+- Needs: commit; push approval (rule 10).
+
+## 2026-11-06 19:39 IST | Backend A | Registry-replay | DONE (backfilled)
+- What: Exact verification replays (same World ID + same wallet) returned 409 and looked like failures. register() is now idempotent for exact matches (returns existing binding); true duplicates (same identity/different wallet, same wallet/different identity) still 409.
+- Evidence: new registry test failed before the fix (red), passes after; typecheck clean, vitest 33/33.
+- Needs: commit; push approval (rule 10).
+
+## 2026-11-06 19:39 IST | Backend B | Thread-body | IN_REVIEW (backfilled)
+- What: Thread page showed no post description. Root cause: feed query never selects the body bytes column and FeedPost carries no body. Added decodeBodyCell helper (unit-tested), fetchPostDetail (eq $key via key() value wrapper, sponsor-owned + allowlisted + unexpired), GET /api/posts/[key] (404 otherwise), and thread-page body rendering with edit prefill.
+- Evidence: typecheck clean, vitest 36/36 (3 new decode tests); live curl of new endpoint returns the user's real post body from chain; unregistered-author probe key correctly 404s. Page render not yet screenshot-checked.
+- Needs: visual check of thread page; commit; push approval (rule 10). Dev servers left running on ports 3109/3111 for verification; stop them before final commit.
+
+## 2026-11-06 20:50 IST | Orchestrator | Review-pass | COMMITTED (pushing next)
+- What: Full pre-push review per requesting-code-review (diff read, secret scan, typecheck, tests, build, independent reviewer subagent). Found and fixed 3 more bugs: (a) feed/thread showed the sponsor wallet as every post's author and isOwner was always false so Author controls never rendered — owner now maps to author, cache bumped v1 to v2 with migration; (b) comment POST always 404d because fetchParentPost filtered Posts.postKey by entity key — now reads the entity directly via getEntity with sponsor-ownership check; (c) rate-limit check-then-record race let concurrent posts slip past 5/day — per-path promise queue, new tests/ratelimit.test.ts. Left untracked harness artifacts (.agents/, skills-lock.json, next-env.d.ts) out of the commit.
+- Evidence: typecheck clean, vitest 39/39 (red-green on cache-migration and rate-race tests), build green with new routes, live curls: feed owner is the author wallet, thread endpoint returns the real post body, bogus comment parent 404s. Independent reviewer verdict passed, 4 non-blocking suggestions recorded for later.
+- Needs: user to post the first real comment (positive comment path not exercised live to avoid polluting their post) and screenshot-check the thread page. Dev servers still running on 3109/3111/3112; user can stop node processes when done.

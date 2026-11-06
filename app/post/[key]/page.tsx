@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Clock, PencilSimple, Spinner } from "@phosphor-icons/react";
 import { countdownTo, getBoundWallet, shortWallet } from "../../lib/wallet";
-import type { CommentsResponse, FeedResponse } from "@/lib/types";
+import type { CommentsResponse, FeedResponse, ThreadPost } from "@/lib/types";
 
 export default function ThreadPage() {
   const { key } = useParams<{ key: string }>();
   const [post, setPost] = useState<FeedResponse["posts"][number] | null>(null);
+  const [detail, setDetail] = useState<ThreadPost | null>(null);
   const [archived, setArchived] = useState(false);
   const [comments, setComments] = useState<CommentsResponse["comments"]>([]);
   const [missing, setMissing] = useState(false);
@@ -44,6 +45,15 @@ export default function ThreadPage() {
     fetch(`/api/comments?postKey=${encodeURIComponent(key)}`)
       .then((r) => (r.ok ? r.json() : { comments: [] }))
       .then((d: CommentsResponse) => setComments(d.comments))
+      .catch(() => undefined);
+    fetch(`/api/posts/${encodeURIComponent(key)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: ThreadPost | null) => {
+        if (d) {
+          setDetail(d);
+          setBodyText((cur) => cur || d.body);
+        }
+      })
       .catch(() => undefined);
   }, [key]);
 
@@ -116,6 +126,7 @@ export default function ThreadPage() {
       if (!res.ok) throw new Error("Could not save.");
       setEditing(false);
       setPost({ ...post, title });
+      if (bodyText) setDetail((d) => (d ? { ...d, title, body: bodyText } : d));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save.");
     } finally {
@@ -163,6 +174,10 @@ export default function ThreadPage() {
         <span className="inline-flex items-center gap-1"><Clock size={15} /> {countdownTo(post.expiresAt)}</span>
       </p>
 
+      {detail ? (
+        <p className="mt-4 whitespace-pre-wrap text-base leading-relaxed">{detail.body}</p>
+      ) : null}
+
       {isOwner ? (
         <section className="mt-6 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-5" aria-label="Author controls">
           <h2 className="text-sm font-semibold">Author controls</h2>
@@ -181,7 +196,7 @@ export default function ThreadPage() {
             <button onClick={submitExtend} disabled={busy} className="btn-press rounded-full bg-[var(--color-ink)] px-4 py-1.5 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed">
               Extend
             </button>
-            <button onClick={() => setEditing((v) => !v)} className="btn-press inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] px-4 py-1.5 text-sm font-semibold">
+            <button onClick={() => { if (!editing && detail && !bodyText) setBodyText(detail.body); setEditing((v) => !v); }} className="btn-press inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] px-4 py-1.5 text-sm font-semibold">
               <PencilSimple size={15} /> {editing ? "Close editor" : "Edit"}
             </button>
           </div>

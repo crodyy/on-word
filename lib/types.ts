@@ -74,6 +74,14 @@ export interface CreateCommentResponse {
   entityKey: string;
 }
 
+export interface ThreadPost {
+  key: string;
+  title: string;
+  body: string;
+  owner: string;
+  expiresAt: string;
+}
+
 export interface ThreadComment {
   key: string;
   author: string;
@@ -97,4 +105,11 @@ export type ApiErrorCode =
 
 export interface ApiError {
   error: ApiErrorCode;
+}
+
+export interface WorldConfigResponse {
+  app_id: `app_${string}`;
+  rp_id: string;
+  action: string;
+  environment: "staging" | "production" | "sandbox";
 }

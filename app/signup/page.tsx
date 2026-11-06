@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { IDKitRequestWidget, orbLegacy, type IDKitResult } from "@worldcoin/idkit";
-import { ShieldCheck, Spinner, Wallet, WarningCircle } from "@phosphor-icons/react";
+import { Spinner, Wallet, WarningCircle } from "@phosphor-icons/react";
 import { connectInjectedWallet, setBoundWallet, shortWallet } from "../lib/wallet";
 
 const APP_ID = (process.env.NEXT_PUBLIC_WORLD_APP_ID ?? "") as `app_${string}`;
@@ -153,7 +153,10 @@ export default function SignupPage() {
           disabled={busy || !walletOk}
           className="btn-press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] px-6 py-3 text-sm font-semibold text-[var(--color-paper)] disabled:cursor-not-allowed"
         >
-          {busy ? <Spinner size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
+          {busy ? <Spinner size={18} className="animate-spin" /> : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src="/world-mark.svg" alt="" width={20} height={20} className="invert" />
+          )}
           Verify with World ID
         </button>
 

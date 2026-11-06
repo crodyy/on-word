@@ -68,7 +68,9 @@ export default function FeedPage() {
             {wallet ? "Be the first to post. Pick a lifetime of 1, 7, or 30 days." : "Verified humans have not posted yet. Check back soon."}
           </p>
           {!wallet ? (
-            <Link href="/signup" className="btn-press mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] px-6 py-3 text-sm font-semibold text-[var(--color-paper)]">
+            <Link href="/signup" className="btn-press mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] px-6 py-3 text-sm font-bold text-[var(--color-paper)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/world-mark.svg" alt="" width={20} height={20} className="invert" />
               Verify with World ID
             </Link>
           ) : null}

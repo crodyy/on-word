@@ -4,7 +4,7 @@
 
 ## 1. One-liner
 
-A human-only forum where 1 verified human = 1 locked wallet, and posts/comments live on Arkiv (Web3 DB) with paid lifetimes. Web3 hidden behind a Web2-feel UI.
+On-Word: a human-only forum where 1 verified human = 1 locked wallet, and posts/comments live on Arkiv (Web3 DB) with paid lifetimes. Web3 hidden behind a Web2-feel UI.
 
 ## 2. Theory (why this design)
 

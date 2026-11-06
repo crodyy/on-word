@@ -1,4 +1,4 @@
-# Human-Only Forum (V1, closed)
+# On-Word (V1, closed)
 
 A forum where 1 verified human equals 1 locked wallet. Posts and comments live on
 Arkiv (Rabdi testnet) with paid lifetimes. Web3 hidden behind a Web2-feel UI.

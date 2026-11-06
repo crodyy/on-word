@@ -56,9 +56,9 @@ export default function SiteHeader() {
 
   return (
     <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-4 sm:px-8">
-      <Link href="/" className="flex items-center gap-2" aria-label="Human-Only Forum home">
+      <Link href="/" className="flex items-center gap-2" aria-label="On-Word home">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.jpg" alt="Human-Only Forum lotus logo" width={72} height={72} className="rounded-full grayscale contrast-125" />
+        <img src="/logo.jpg" alt="On-Word lotus logo" width={72} height={72} className="rounded-full grayscale contrast-125" />
       </Link>
       <div className="flex items-center gap-2">
         {wallet ? (

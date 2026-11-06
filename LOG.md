@@ -234,3 +234,8 @@
 - What: User asked for a Connect-wallet button instead of manual address entry. Added connectInjectedWallet (EIP-1193 eth_requestAccounts, no new deps) plus a manual paste fallback for browsers without an extension. Signup now: Connect wallet (outline) or paste link, connected address shown shortened with Change, then Verify with World ID. Screenshot-reviewed clean.
 - Evidence: tsc clean, build green, 1440px screenshot reviewed.
 - Needs: commit; push approval (two commits pending: security audit plus this).
+
+## 2026-11-06 16:10 IST | Orchestrator | V1 | CLOSED
+- What: User closed V1 and pointed V2 at UI/UX. Close-out: wrote README.md (status, setup, six known limitations). Pushed nothing yet. Unproven-live items (simulator signup 409s, bound-wallet posting, 6-post 429, owner extend/edit success, live-post rendering) plus S-001 carry into V2. No statuses faked: IN_REVIEW items stay as-is.
+- Evidence: README.md written; vitest 32/32; build green.
+- Needs: push approval for ecf58f4, 612a3b6, and this; then V2 scope.

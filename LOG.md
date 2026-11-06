@@ -124,3 +124,18 @@
 - What: User replaced RP_SIGNING_KEY. Rebuilt, started production server on 3100, curl good action returns 200 with sig (132 chars), nonce, created_at/expires_at; wrong action returns 400 bad-action. Server stopped after check. T-005 DONE, unblocking T-006.
 - Evidence: curl 200 {sig, nonce, created_at:1793951476, expires_at:1793951776}; curl wrong-action 400 bad-action.
 - Needs: commit tracking; push approval for 2fbbbe0 + this; then T-006 (verify-proof, Backend A, deps T-003+T-005 now both DONE).
+
+## 2026-11-06 13:55 IST | Orchestrator | T-005 | DECISION
+- What: User approved push ("push it"). Pushed df9c369 to origin master: 0029121..df9c369 Done.
+- Evidence: push porcelain output.
+- Needs: none.
+
+## 2026-11-06 13:55 IST | Orchestrator | T-006 | STARTED
+- What: Backend A lane. Building lib/worldid/verify.ts + app/api/verify-proof/route.ts with TDD (mocked verify API in tests). Must confirm signal-hash and nullifier extraction from the World docs before implementing, per AGENTS.md 7.B.
+- Evidence: n/a (start).
+- Needs: docs check, red/green test run, then simulator e2e with user.
+
+## 2026-11-06 14:00 IST | Orchestrator | T-006 | IN_REVIEW
+- What: TDD done. Wrote tests/verify.test.ts first (8 tests: valid bind, tampered signal, worldid-reused, wallet-reused, verify-failed, env mismatch x2, action mismatch), red on missing module, then lib/worldid/verify.ts (forwards IDKit result as-is to /api/v4/verify/{rp_id}, checks env/action/signal_hash via hashSignal(walletLower), extracts nullifier, registerBinding maps 409s). Docs used: verify API page (forward as-is, rp_id path, success shape) plus signatures page (hash_to_field vectors match hashSignal semantics) plus local hashSignal. Fixed type errors (signal_hash narrowing, err unknown narrowing). 16/16 green, typecheck clean, build passes with /api/verify-proof route. Wrote app/api/verify-proof/route.ts (400 verify-failed, 409 worldid-reused/wallet-reused, never logs nullifier).
+- Evidence: vitest 16 passed; tsc clean; next build route table shows /api/verify-proof.
+- Needs: simulator e2e with user (signup x2: first 200 ok:true, second 409 worldid-reused; reused wallet 409 wallet-reused). Commit and push approval, then T-007 unblocked (deps T-001 and T-002 DONE).

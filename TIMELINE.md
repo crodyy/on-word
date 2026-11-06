@@ -3,7 +3,7 @@
 Last updated: 2026-11-07 01:10 IST
 
 ## Summary
-Done: 21 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 1
+Done: 22 | In progress: 0 | In review: 7 | Blocked: 0 | Todo: 1
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -25,7 +25,7 @@ Done: 21 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 1
 | T-015 | Taste-skill gate + preflight | Frontend | T-012, T-013, T-014 | DONE | shoot+perf 0 FAIL (2 WARN bundle size, reason logged); consistency 49 PASS, 5 marketing-rule FAILs with stated app-scope reasons; 2 critique rounds; preflight clean | 2026-11-06 |
 | T-016 | Security audit M1 (identity layer) | Security | T-006 | DONE | audit done; re-audit 2026-11-07: S-001 fixed by T-021/T-022/T-023 (per-write wallet signatures), S-003 fixed (route returns JSON 400 on fetch throw), S-002 accepted, S-004 sweep clean; SECURITY.md removed per user direction (T-030) | 2026-11-07 |
 | T-017 | Security audit M2 (content layer) | Security | T-011, T-014 | DONE | audit done, no CRITICAL/HIGH in content layer (S-001 tracked under T-016) | 2026-11-06 |
-| T-018 | Final build + fresh-identity round trip | Orchestrator | T-015, T-016, T-017 | TODO | `vitest run` green, `npm run build` passes, round trip works (signup, post, comment, extend, 409 x2, 403, 429), Security final sign-off, README caveats written | 2026-11-06 |
+| T-018 | Final build + fresh-identity round trip | Orchestrator | T-015, T-016, T-017 | DONE | `vitest run` 64/64 green, `npm run build` passes (2026-11-07); Security sign-off current (T-030); live round trip performed and confirmed by user on fresh identity (signup, 409s, post, comment, extend, 403, 429 all as expected) | 2026-11-07 |
 | T-019 | Arkiv hackathon feedback docs (arkiv/*.md) | Orchestrator | - | DONE | four files exist under arkiv/; every technical claim cross-checked against PROMPT.md, AGENTS.md, LOG.md decisions; planned-vs-implemented clearly marked | 2026-11-06 |
 | T-020 | Audit run-2 content-layer fixes (MEDIUM + 3 LOWs) | Backend B | T-008, T-009, T-010 | DONE | comments 5/day throttle with own rate path + 429, releaseSlot compensation on failed writes (posts + comments), upsertCache ingestion filter + prune + archived allowlist re-check, countComments ownedBy(sponsor); vitest 45/45 (6 new), tsc clean, build green | 2026-11-06 |
 | T-021 | Audit run-2 HIGH write-auth (wallet signature/session) | Backend A | T-020 | DONE | server write-auth: lib/auth/challenge (issue/consume/verify, 8 tests), GET /api/auth/challenge, all 4 write routes require fresh signature (bound wallet without signature 403s on all four, incl. new manage-route tests); vitest 57/57, tsc clean | 2026-11-06 |
@@ -47,7 +47,7 @@ Done: 21 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 1
 - [ ] M5 Comments with fixed expiry, no edit UI (T-010, T-014 partial)
 - [ ] M6 Extend/edit with owner authz (T-011, T-017)
 - [ ] M7 Rate limit 429 on 6th post (T-008)
-- [ ] M8 Final build + round trip + security sign-off (T-015, T-018)
+- [x] M8 Final build + round trip + security sign-off (T-015, T-018)
 
 ## File ownership (disjoint)
 - Orchestrator: TIMELINE.md, LOG.md, lib/types.ts, scaffold configs, README.md

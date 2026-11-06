@@ -349,3 +349,13 @@
 - What: User said "commit and then update any md files if needed then push" covering T-026 through T-030 plus SECURITY.md deletion. TIMELINE board refreshed (T-016 DONE, T-028/29/30 DONE, counts Done:21/In review:8). Committing once, pushing to origin master.
 - Evidence: n/a (direction).
 - Needs: commit then push now.
+
+## 2026-11-07 01:15 IST | Orchestrator | T-018 | STARTED
+- What: T-018 automated half done: vitest 64/64 green, production build passes. Security sign-off is current (T-030 re-audit + bundle scan this session). Registry holds 2 prior bindings; server env keys present.
+- Evidence: test/build output above; rounded blockers below.
+- Needs: USER in browser for the live half. Fresh identity means a new simulator person plus a new wallet: (1) open /signup with a fresh wallet, verify through the World simulator, confirm binding; (2) second signup with same person or same wallet, expect 409 worldid-reused / wallet-reused; (3) /post/new with 1-hour lifetime, publish, confirm entityKey and redirect; (4) comment on it; (5) extend it (+1h), then try extend from a different bound wallet, expect 403; (6) rapid-post to the 6th, expect 429. Report each result back and T-018 goes DONE.
+
+## 2026-11-07 01:20 IST | Orchestrator | T-018 | DONE
+- What: User performed the live round trip on a fresh identity and confirmed every step behaved as expected (signup, duplicate 409s, post, comment, extend, non-owner 403, 6th-post 429). No tx hashes captured; evidence is user confirmation plus the green automated half (vitest 64/64, build pass) logged at STARTED.
+- Evidence: user report "done" / "all good" on the 7-step checklist; suite + build output 2026-11-07.
+- Needs: nothing on T-018. Remaining IN_REVIEW items (T-006, T-008, T-011, T-013, T-014, T-026, T-027) are trackable follow-ups, not blockers.

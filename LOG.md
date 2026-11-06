@@ -304,3 +304,8 @@
 - What: Server write-auth via wallet-signed challenge (T-021a lib: issueChallenge/consumeChallenge/authMessage/verifyWalletSignature/assertWriteAuth, single-use 10-min nonces, file-backed serialized, expired-prune on issue; 8 tests. T-021b: new GET /api/auth/challenge + all 4 write routes require fresh signature, validation-before-auth so 400s stay 400s; new AuthChallengeResponse contract type).
 - Evidence: RED watched (missing module, then 403-gate tests), GREEN: vitest 57/57 across 10 files (12 new), tsc clean. Bound wallet without signature 403s on posts/comments/extend/edit.
 - Needs: user approval to push both commits; T-022 (signup strict + signature) and T-023 (frontend signing) remain.
+
+## 2026-11-06 22:25 IST | Backend A + Frontend | T-022+T-023 | COMMITTED (push approval pending)
+- What: Closed both HIGHs. T-022: verifyProof requires a wallet signature over a server nonce before register(), fail-closed signal (every response must carry it) and action (must equal expected) checks; verify-proof route requires signature+nonce in body. T-023: signup is injected-wallet only (manual paste removed), signup + post/comment/extend/edit all fetch a challenge and personal_sign it. Lane note: implemented by the pairing agent across Backend A and Frontend files; needs a Frontend review pass.
+- Evidence: RED watched (4 new tests failed: 3 fail-closed gaps + missing-signature registered anyway), then GREEN: vitest 61/61 across 10 files (16 new), tsc clean, build green. No x-wallet-only sender remains in app/.
+- Needs: user approval to push; simulator round trip (NV-2) now exercises the new flow: signup 200, 409s, bound write, 6th-post 429.

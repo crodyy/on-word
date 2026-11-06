@@ -3,7 +3,7 @@
 Last updated: 2026-11-06 22:00 IST
 
 ## Summary
-Done: 13 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 4
+Done: 15 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 2
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -29,8 +29,8 @@ Done: 13 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 4
 | T-019 | Arkiv hackathon feedback docs (arkiv/*.md) | Orchestrator | - | DONE | four files exist under arkiv/; every technical claim cross-checked against PROMPT.md, AGENTS.md, LOG.md decisions; planned-vs-implemented clearly marked | 2026-11-06 |
 | T-020 | Audit run-2 content-layer fixes (MEDIUM + 3 LOWs) | Backend B | T-008, T-009, T-010 | DONE | comments 5/day throttle with own rate path + 429, releaseSlot compensation on failed writes (posts + comments), upsertCache ingestion filter + prune + archived allowlist re-check, countComments ownedBy(sponsor); vitest 45/45 (6 new), tsc clean, build green | 2026-11-06 |
 | T-021 | Audit run-2 HIGH write-auth (wallet signature/session) | Backend A | T-020 | DONE | server write-auth: lib/auth/challenge (issue/consume/verify, 8 tests), GET /api/auth/challenge, all 4 write routes require fresh signature (bound wallet without signature 403s on all four, incl. new manage-route tests); vitest 57/57, tsc clean | 2026-11-06 |
-| T-022 | Audit run-2 HIGH signup wallet-ownership | Backend A | T-021 | TODO | injected-wallet only (no manual paste), wallet signature over server challenge before register(), strict fail-closed signal/action; unowned-address and omitted-signal_hash bindings fail | 2026-11-06 |
-| T-023 | Frontend wallet-signing (signup + write pages) | Frontend | T-021, T-022 | TODO | challenge fetch + personal_sign via injected wallet on signup/post/comment/extend/edit; manual paste removed; no x-wallet-only path remains in UI | 2026-11-06 |
+| T-022 | Audit run-2 HIGH signup wallet-ownership | Backend A | T-021 | DONE | verifyProof requires wallet signature over server nonce before register + fail-closed signal/action; verify-proof route passes signature/nonce; vitest 12/12 verify tests; lane note: signature tests use generated keys | 2026-11-06 |
+| T-023 | Frontend wallet-signing (signup + write pages) | Frontend | T-021, T-022 | DONE | injected-wallet only (manual paste removed), challenge+personal_sign on signup and all write pages via signedWriteHeaders; lane note: Backend pairing agent implemented, needs Frontend review; live simulator pass still required | 2026-11-06 |
 
 ## Milestones
 - [ ] M1 Registry + RP signature (T-003, T-005, T-016 partial)

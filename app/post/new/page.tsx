@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getBoundWallet } from "../../lib/wallet";
+import { getBoundWallet, signedWriteHeaders } from "../../lib/wallet";
 
 const DAYS = [1, 7, 30] as const;
 
@@ -37,10 +37,10 @@ export default function NewPostPage() {
     try {
       const res = await fetch("/api/posts", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-wallet": wallet },
+        headers: { "content-type": "application/json", ...(await signedWriteHeaders(wallet)) },
         body: JSON.stringify({ title, body, days }),
       });
-      if (res.status === 403) throw new Error("This wallet is not bound. Verify first.");
+      if (res.status === 403) throw new Error("This wallet is not bound or the signature failed. Verify first.");
       if (res.status === 429) throw new Error("Slow down. The limit is 5 posts per day.");
       if (!res.ok) throw new Error("Could not publish. Try again.");
       const data = (await res.json()) as { entityKey: string };

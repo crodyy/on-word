@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Clock, PencilSimple, Spinner } from "@phosphor-icons/react";
-import { countdownTo, getBoundWallet, shortWallet } from "../../lib/wallet";
+import { countdownTo, getBoundWallet, shortWallet, signedWriteHeaders } from "../../lib/wallet";
 import type { CommentsResponse, FeedResponse, ThreadPost } from "@/lib/types";
 
 export default function ThreadPage() {
@@ -74,10 +74,10 @@ export default function ThreadPage() {
     try {
       const res = await fetch("/api/comments", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-wallet": wallet },
+        headers: { "content-type": "application/json", ...(await signedWriteHeaders(wallet)) },
         body: JSON.stringify({ postKey: key, body: draft }),
       });
-      if (res.status === 403) throw new Error("This wallet is not bound. Verify first.");
+      if (res.status === 403) throw new Error("This wallet is not bound or the signature failed. Verify first.");
       if (res.status === 404) throw new Error("This post no longer accepts comments.");
       if (!res.ok) throw new Error("Could not post the comment.");
       setDraft("");
@@ -97,7 +97,7 @@ export default function ThreadPage() {
     try {
       const res = await fetch(`/api/posts/${key}/extend`, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-wallet": wallet },
+        headers: { "content-type": "application/json", ...(await signedWriteHeaders(wallet)) },
         body: JSON.stringify({ days: extendDays }),
       });
       if (res.status === 403) throw new Error("Only the author can extend.");
@@ -119,7 +119,7 @@ export default function ThreadPage() {
     try {
       const res = await fetch(`/api/posts/${key}/edit`, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-wallet": wallet },
+        headers: { "content-type": "application/json", ...(await signedWriteHeaders(wallet)) },
         body: JSON.stringify({ title, body: bodyText || undefined }),
       });
       if (res.status === 403) throw new Error("Only the author can edit.");

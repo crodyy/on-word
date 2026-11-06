@@ -23,6 +23,44 @@ export function shortWallet(wallet: string): string {
   return `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
 }
 
+// Exact message the server verifies (lib/auth/challenge.ts authMessage).
+// Wallets display it verbatim, so it names the forum and carries the address
+// plus the single-use server nonce. Keep both sides identical.
+export function authMessage(wallet: string, nonce: string): string {
+  return `on-word auth ${wallet.toLowerCase()} ${nonce}`;
+}
+
+export async function getChallenge(wallet: string): Promise<{ nonce: string; expiresAt: string }> {
+  const res = await fetch(`/api/auth/challenge?wallet=${encodeURIComponent(wallet.toLowerCase())}`);
+  if (!res.ok) throw new Error("Could not start wallet signing. Try again.");
+  return (await res.json()) as { nonce: string; expiresAt: string };
+}
+
+// Signs the server challenge with the injected wallet. The address must be
+// the connected account: signing proves the writer holds the bound key.
+export async function signAuthMessage(wallet: string, nonce: string): Promise<string> {
+  const provider = typeof window !== "undefined" ? window.ethereum : undefined;
+  if (!provider) {
+    throw new Error("No wallet found in this browser. Connect the bound wallet to continue.");
+  }
+  const signature = (await provider.request({
+    method: "personal_sign",
+    params: [authMessage(wallet, nonce), wallet],
+  })) as unknown;
+  if (typeof signature !== "string" || !signature.startsWith("0x")) {
+    throw new Error("The wallet did not return a signature.");
+  }
+  return signature;
+}
+
+// Fetches a fresh server nonce and signs it. Every authenticated write sends
+// these three headers; the x-wallet value alone proves nothing.
+export async function signedWriteHeaders(wallet: string): Promise<Record<string, string>> {
+  const { nonce } = await getChallenge(wallet);
+  const signature = await signAuthMessage(wallet, nonce);
+  return { "x-wallet": wallet, "x-auth-nonce": nonce, "x-auth-signature": signature };
+}
+
 declare global {
   interface Window {
     ethereum?: {

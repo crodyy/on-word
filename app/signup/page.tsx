@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { IDKitRequestWidget, orbLegacy, type IDKitResult } from "@worldcoin/idkit";
 import { Spinner, Wallet, WarningCircle } from "@phosphor-icons/react";
-import { connectInjectedWallet, setBoundWallet, shortWallet } from "../lib/wallet";
+import { connectInjectedWallet, getChallenge, setBoundWallet, shortWallet, signAuthMessage } from "../lib/wallet";
 import type { WorldConfigResponse } from "@/lib/types";
 
 const FALLBACK_ACTION = "human-forum-register-v1";
@@ -13,7 +13,6 @@ type RP = { sig: string; nonce: string; created_at: number; expires_at: number }
 
 export default function SignupPage() {
   const [wallet, setWallet] = useState("");
-  const [manual, setManual] = useState(false);
   const [rp, setRp] = useState<RP | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -54,7 +53,6 @@ export default function SignupPage() {
       setWallet(await connectInjectedWallet());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not connect.");
-      setManual(true);
     } finally {
       setBusy(false);
     }
@@ -84,10 +82,16 @@ export default function SignupPage() {
   }
 
   async function handleVerify(result: IDKitResult): Promise<void> {
+    // Prove the wallet belongs to this browser before the server binds it.
+    // The signature covers a fresh server nonce, so a pasted address alone
+    // can never be registered.
+    const address = wallet.trim().toLowerCase();
+    const { nonce } = await getChallenge(address);
+    const signature = await signAuthMessage(address, nonce);
     const res = await fetch("/api/verify-proof", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ idkitResponse: result, wallet: wallet.trim().toLowerCase() }),
+      body: JSON.stringify({ idkitResponse: result, wallet: address, signature, nonce }),
     });
     if (res.status === 409) {
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -128,7 +132,7 @@ export default function SignupPage() {
         {walletOk ? (
           <div className="mt-2 flex items-center justify-between rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3">
             <span className="font-mono text-sm" title={wallet}>{shortWallet(wallet.trim())}</span>
-            <button onClick={() => { setWallet(""); setManual(false); }} className="text-sm font-semibold underline">
+            <button onClick={() => setWallet("")} className="text-sm font-semibold underline">
               Change
             </button>
           </div>
@@ -142,24 +146,9 @@ export default function SignupPage() {
               {busy ? <Spinner size={18} className="animate-spin" /> : <Wallet size={18} />}
               Connect wallet
             </button>
-            {manual ? (
-              <>
-                <label htmlFor="wallet" className="mt-4 block text-sm font-medium">Or paste your address</label>
-                <input
-                  id="wallet"
-                  value={wallet}
-                  onChange={(e) => setWallet(e.target.value)}
-                  placeholder="0x..."
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="mt-2 w-full rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3 font-mono text-sm outline-none focus:border-[var(--color-ink)]"
-                />
-              </>
-            ) : (
-              <button onClick={() => setManual(true)} className="mt-3 text-sm font-medium underline">
-                No wallet extension? Paste an address instead
-              </button>
-            )}
+            <p className="mt-3 text-sm">
+              A wallet extension is required. The address you connect is the one that gets bound.
+            </p>
           </>
         )}
         {error ? (

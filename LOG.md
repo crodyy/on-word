@@ -59,3 +59,33 @@
 - What: Scaffold complete. Installed: next 14.2.18, @worldcoin/idkit 4.6.0, @arkiv-network/sdk 1.0.1 (spec guess 0.9.0 did not exist; resolved via npm view), viem 2.x, vitest 2.1.9. `npm run build` passes (static /, 87.2 kB first load). `npm run typecheck` clean. `npm test` reports no test files, expected, tests land in T-003.
 - Evidence: build output route table above; npm ls confirms versions.
 - Needs: push approval for this task's commit, then release T-002/T-003/T-004 (T-002 Backend B, T-003 Backend A, T-004 Orchestrator, all depend only on T-001).
+
+## 2026-11-06 13:12 IST | Orchestrator | T-001 | DECISION
+- What: User approved push ("go on"). Pushed cd89be3 to origin master: 6594b7f..cd89be3 Done. SDK v1.0.1 export check confirms the docs API surface (createPublicClient, createWalletClient, ExpirationTime, defineSchema, rabdi chain, and/or/eq).
+- Evidence: push porcelain output; SDK/CHAINS/QUERY/SCHEMA export lists.
+- Needs: none.
+
+## 2026-11-06 13:12 IST | Orchestrator | T-002 | STARTED
+- What: Backend B lane opens. Wrote lib/arkiv/client.ts (public + wallet clients, sponsor helpers) and scripts/check-rabdi.mjs (prints chain id, block, sponsor address, balance only; exits nonzero when unfunded). Running the check next without reading .env.local.
+- Evidence: n/a (start).
+- Needs: check output; if balance is 0 or keys missing, user funds via faucet.
+
+## 2026-11-06 13:15 IST | Orchestrator | T-002 | BLOCKED
+- What: Chain is reachable (chainId 7794095, block 282491) but the sponsor key check failed: privateKeyToAccount threw "invalid private key, expected hex or 32 bytes, got string". The key exists in .env.local but is malformed (not 0x + 64 hex). .env.local was not read; diagnosis is from the thrown error only.
+- Evidence: check-rabdi.mjs output above.
+- Needs: user sets SPONSOR_PRIVATE_KEY to a throwaway testnet key (0x + 64 hex chars, never a real wallet), sets ARKIV_ACCESS_KEY from Arkiv Hub, and funds the derived sponsor address with tGLM from https://hub.arkiv.network/faucet. Re-run: node --env-file=.env.local scripts/check-rabdi.mjs.
+
+## 2026-11-06 13:15 IST | Orchestrator | T-003 | STARTED
+- What: Backend A lane opens while T-002 waits on the user. TDD: writing tests/registry.test.ts first (must fail), then lib/registry/store.ts. No chain or secrets involved.
+- Evidence: n/a (start).
+- Needs: red run, minimal implementation, green run, commit.
+
+## 2026-11-06 13:20 IST | Orchestrator | T-002 | DONE
+- What: Prior BLOCKED was a misdiagnosis. The key in .env.local is 64 hex chars without the 0x prefix (confirmed via length/prefix probe only, value never read). viem requires 0x. Fixed lib/arkiv/client.ts getSponsorAccount and scripts/check-rabdi.mjs to prepend 0x when missing. Re-ran check: chain 7794095, block 282519, sponsor balance 10 tGLM, funded, no user action needed.
+- Evidence: check-rabdi.mjs output chainId 7794095 block 282519 balance 10 tGLM.
+- Needs: commit T-002 with T-003; push approval.
+
+## 2026-11-06 13:20 IST | Orchestrator | T-003 | IN_REVIEW
+- What: Registry TDD complete. Sibling wrote tests/registry.test.ts (8 tests) and lib/registry/store.ts (single-writer queue, UNIQUE nullifier/wallet, lowercase normalize). Red run showed 2 failures: 0X-prefix nullifiers rejected by regex. Root fix in normalizeNullifier: lowercase first, then validate. Green 8/8, typecheck clean.
+- Evidence: npx vitest run 8 passed; npx tsc --noEmit clean.
+- Needs: commit, push approval, then release T-004/T-005 (T-006 waits on both).

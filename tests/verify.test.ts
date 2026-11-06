@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashSignal } from "@worldcoin/idkit-core/hashing";
+import { privateKeyToAccount } from "viem/accounts";
+import { authMessage, issueChallenge } from "../lib/auth/challenge";
 import { createRegistryStore } from "../lib/registry/store";
 import { VerifyError, verifyProof } from "../lib/worldid/verify";
 
@@ -10,7 +12,9 @@ function errCode(err: unknown): string {
   return err instanceof VerifyError ? err.code : `unexpected:${String(err)}`;
 }
 
-const WALLET = "0xAbC12300000000000000000000000000000000dE";
+const ACCOUNT = privateKeyToAccount(`0x${"ab".repeat(32)}`);
+const OTHER = privateKeyToAccount(`0x${"cd".repeat(32)}`);
+const WALLET = ACCOUNT.address;
 const NULLIFIER = "0x" + "c3".repeat(32);
 const ACTION = "human-forum-register-v1";
 
@@ -45,10 +49,12 @@ function verifyOk() {
 describe("verifyProof", () => {
   let dir: string;
   let path: string;
+  let noncePath: string;
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "verify-test-"));
     path = join(dir, "registry.json");
+    noncePath = join(dir, "nonces.json");
     vi.unstubAllGlobals();
   });
 
@@ -57,14 +63,30 @@ describe("verifyProof", () => {
     vi.unstubAllGlobals();
   });
 
+  // Issues a server nonce for the wallet and signs it with the account key,
+  // producing the full authenticated input verifyProof requires.
+  async function authed(
+    idkitResponse: unknown,
+    wallet: string,
+    account: typeof ACCOUNT,
+  ): Promise<{ idkitResponse: unknown; wallet: string; signature: `0x${string}`; nonce: string }> {
+    const { nonce } = await issueChallenge(wallet, { path: noncePath });
+    const signature = await account.signMessage({ message: authMessage(wallet, nonce) });
+    return { idkitResponse, wallet, signature, nonce };
+  }
+
+  function opts(store: ReturnType<typeof createRegistryStore>) {
+    return { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test", noncePath };
+  }
+
   it("registers a binding on valid proof", async () => {
     const store = createRegistryStore(path);
     const fetchMock = vi.fn(async () => new Response(JSON.stringify(verifyOk()), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     const wallet = WALLET.toLowerCase();
     const res = await verifyProof(
-      { idkitResponse: idkitResult(hashSignal(wallet)), wallet },
-      { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test" },
+      await authed(idkitResult(hashSignal(wallet)), wallet, ACCOUNT),
+      opts(store),
     );
     expect(res).toEqual({ ok: true, nullifier: NULLIFIER.toLowerCase() });
     expect(await store.getBinding(wallet)).toBeDefined();
@@ -80,7 +102,7 @@ describe("verifyProof", () => {
     vi.stubGlobal("fetch", fetchMock);
     const err = await verifyProof(
       { idkitResponse: idkitResult(hashSignal("0xothertamperedwallet000000000000000001")), wallet: WALLET },
-      { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test" },
+      opts(store),
     ).catch((e: unknown) => e);
     expect(errCode(err)).toBe("verify-failed");
     expect(await store.getAllowlist()).toEqual([]);
@@ -91,10 +113,10 @@ describe("verifyProof", () => {
     await store.register({ nullifier: NULLIFIER, wallet: WALLET });
     const fetchMock = vi.fn(async () => new Response(JSON.stringify(verifyOk()), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
-    const other = "0xdef45600000000000000000000000000000000ab";
+    const other = OTHER.address.toLowerCase();
     const err = await verifyProof(
-      { idkitResponse: idkitResult(hashSignal(other)), wallet: other },
-      { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test" },
+      await authed(idkitResult(hashSignal(other)), other, OTHER),
+      opts(store),
     ).catch((e: unknown) => e);
     expect(errCode(err)).toBe("worldid-reused");
   });
@@ -110,8 +132,8 @@ describe("verifyProof", () => {
     const res2 = idkitResult(hashSignal(WALLET.toLowerCase()));
     res2.responses[0].nullifier = "0x" + "e5".repeat(32);
     const err = await verifyProof(
-      { idkitResponse: res2, wallet: WALLET },
-      { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test" },
+      await authed(res2, WALLET, ACCOUNT),
+      opts(store),
     ).catch((e: unknown) => e);
     expect(errCode(err)).toBe("wallet-reused");
   });
@@ -124,7 +146,7 @@ describe("verifyProof", () => {
     vi.stubGlobal("fetch", fetchMock);
     const err = await verifyProof(
       { idkitResponse: idkitResult(hashSignal(WALLET.toLowerCase())), wallet: WALLET },
-      { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test" },
+      opts(store),
     ).catch((e: unknown) => e);
     expect(errCode(err)).toBe("verify-failed");
     expect(await store.getAllowlist()).toEqual([]);
@@ -136,7 +158,7 @@ describe("verifyProof", () => {
     vi.stubGlobal("fetch", fetchMock);
     const err = await verifyProof(
       { idkitResponse: idkitResult(hashSignal(WALLET.toLowerCase()), "production"), wallet: WALLET },
-      { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test" },
+      opts(store),
     ).catch((e: unknown) => e);
     expect(errCode(err)).toBe("verify-failed");
     expect(fetchMock).not.toHaveBeenCalled();
@@ -148,7 +170,7 @@ describe("verifyProof", () => {
     vi.stubGlobal("fetch", fetchMock);
     const err = await verifyProof(
       { idkitResponse: idkitResult(hashSignal(WALLET.toLowerCase())), wallet: WALLET },
-      { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test" },
+      opts(store),
     ).catch((e: unknown) => e);
     expect(errCode(err)).toBe("verify-failed");
     expect(await store.getAllowlist()).toEqual([]);
@@ -160,8 +182,63 @@ describe("verifyProof", () => {
     vi.stubGlobal("fetch", fetchMock);
     const err = await verifyProof(
       { idkitResponse: idkitResult(hashSignal(WALLET.toLowerCase())), wallet: WALLET },
-      { store, expectedAction: ACTION, expectedEnv: "staging", rpId: "rp_test" },
+      opts(store),
     ).catch((e: unknown) => e);
     expect(errCode(err)).toBe("verify-failed");
+  });
+
+  it("rejects a missing signal_hash without calling the API", async () => {
+    const store = createRegistryStore(path);
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(verifyOk()), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = idkitResult(hashSignal(WALLET.toLowerCase()));
+    delete (result.responses[0] as { signal_hash?: string }).signal_hash;
+    const err = await verifyProof(
+      { idkitResponse: result, wallet: WALLET },
+      opts(store),
+    ).catch((e: unknown) => e);
+    expect(errCode(err)).toBe("verify-failed");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await store.getAllowlist()).toEqual([]);
+  });
+
+  it("rejects a verify response without an action", async () => {
+    const store = createRegistryStore(path);
+    const unsigned = { ...verifyOk(), action: undefined };
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(unsigned), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const wallet = WALLET.toLowerCase();
+    const err = await verifyProof(
+      await authed(idkitResult(hashSignal(wallet)), wallet, ACCOUNT),
+      opts(store),
+    ).catch((e: unknown) => e);
+    expect(errCode(err)).toBe("verify-failed");
+    expect(await store.getAllowlist()).toEqual([]);
+  });
+
+  it("rejects a valid proof without a wallet signature", async () => {
+    const store = createRegistryStore(path);
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(verifyOk()), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const wallet = WALLET.toLowerCase();
+    const err = await verifyProof(
+      { idkitResponse: idkitResult(hashSignal(wallet)), wallet },
+      opts(store),
+    ).catch((e: unknown) => e);
+    expect(errCode(err)).toBe("verify-failed");
+    expect(await store.getAllowlist()).toEqual([]);
+  });
+
+  it("rejects a wallet signature from a different key", async () => {
+    const store = createRegistryStore(path);
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(verifyOk()), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const wallet = WALLET.toLowerCase();
+    const err = await verifyProof(
+      await authed(idkitResult(hashSignal(wallet)), wallet, OTHER),
+      opts(store),
+    ).catch((e: unknown) => e);
+    expect(errCode(err)).toBe("verify-failed");
+    expect(await store.getAllowlist()).toEqual([]);
   });
 });

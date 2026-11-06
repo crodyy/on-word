@@ -185,6 +185,11 @@
 - Evidence: n/a (start).
 - Needs: unit tests (validation, parent checks) plus one live fixed-expiry comment on the probe post.
 
+## 2026-11-06 14:50 IST | Orchestrator | T-011 | IN_REVIEW
+- What: Wrote lib/arkiv/manage.ts (fetchManagedPost via getEntity, assertOwner requires author match plus registry binding, extendPostEntity fromDays-from-now, editPostEntity patchEntity set) and both routes with binding 403, missing 404, non-owner 403, bad-shape 400, EntityMutationError to generic 403. Note: eq("$key") in where is rejected by the node, so lookup uses getEntity, not a filtered query. Live curl against temp registry (throwaway binding, removed after): extend no-wallet 403, bogus key 404, non-owner extend 403, non-owner edit 403, zero chain writes. Success paths need a registered-author post, deferred to the T-018 round-trip.
+- Evidence: curl 403/404/403/403 above; vitest 32 passed; tsc clean; build includes both routes.
+- Needs: commit; push approval; then Frontend lane T-012/T-013/T-014 unblocked (deps T-004/T-005/T-006-code/T-008-code/T-009/T-010/T-011-code DONE or IN_REVIEW).
+
 ## 2026-11-06 14:40 IST | Orchestrator | T-010 | DONE
 - What: Wrote lib/arkiv/comments.ts (validateCommentInput 1B..5KB, fetchParentPost by postKey under ownedBy(sponsor), fixed fromDays(7) create) and app/api/comments/route.ts (x-wallet binding 403, shape/validation 400, missing-or-expired parent 404, EntityMutationError to generic 403). Parent check deliberately skips the allowlist: comments on hidden posts stay hidden with them, and the probe post stays usable. No comment edit/extend routes exist anywhere (only app/api/comments/route.ts). Live probe on the probe post: parent found (expiresAt 326542), comment entity 0x9fc72630.., expiresAt delta exactly 302402 blocks (7d at 2s), tx 0x68f49b5b.. success, count on parent now 1.
 - Evidence: https://rabdi.explorer.arkiv.network/tx/0x68f49b5b6128f7fcffc23f3ac7db22cbc447274e7420bb25f57030912ed72dad; vitest 32 passed; tsc clean.

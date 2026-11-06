@@ -239,3 +239,8 @@
 - What: User closed V1 and pointed V2 at UI/UX. Close-out: wrote README.md (status, setup, six known limitations). Pushed nothing yet. Unproven-live items (simulator signup 409s, bound-wallet posting, 6-post 429, owner extend/edit success, live-post rendering) plus S-001 carry into V2. No statuses faked: IN_REVIEW items stay as-is.
 - Evidence: README.md written; vitest 32/32; build green.
 - Needs: push approval for ecf58f4, 612a3b6, and this; then V2 scope.
+
+## 2026-11-06 16:12 IST | Orchestrator | V1 | DECISION
+- What: User approved push ("push it"). Pushed a57589c to origin master: efaf82e..a57589c Done. V1 closed and fully pushed.
+- Evidence: push porcelain output.
+- Needs: V2 UI/UX scope from user.

@@ -4,7 +4,7 @@ import { EntityMutationError } from "@arkiv-network/sdk";
 import type { Hex } from "viem";
 import { getDefaultStore } from "@/lib/registry/store";
 import { createPostEntity, validatePostInput } from "@/lib/arkiv/posts";
-import { checkAndRecord, RateLimitedError } from "@/lib/arkiv/rateLimit";
+import { checkAndRecord, RateLimitedError, releaseSlot } from "@/lib/arkiv/rateLimit";
 import { countComments, fetchLivePosts, loadCache, saveCache, splitFeed, upsertCache } from "@/lib/arkiv/feed";
 import { getSponsorAddress } from "@/lib/arkiv/client";
 import type { ApiError, CreatePostResponse, FeedResponse } from "@/lib/types";
@@ -54,6 +54,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreatePostRes
     });
     return NextResponse.json({ entityKey: res.entityKey });
   } catch (err) {
+    // Failed chain writes must not burn daily quota.
+    await releaseSlot(binding.wallet, { path: RATE_PATH }).catch(() => undefined);
     if (err instanceof EntityMutationError) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
@@ -74,13 +76,13 @@ export async function GET(): Promise<NextResponse<FeedResponse | ApiError>> {
     const counts = new Map<string, number>();
     for (const p of posts) {
       try {
-        counts.set(p.key, await countComments(p.postKey));
+        counts.set(p.key, await countComments(p.postKey, sponsor));
       } catch {
         counts.set(p.key, 0);
       }
     }
     const feed = splitFeed(posts, allowlist, currentBlock, counts, cache);
-    await saveCache(CACHE_PATH, upsertCache(cache, posts)).catch(() => undefined);
+    await saveCache(CACHE_PATH, upsertCache(cache, posts, allowlist)).catch(() => undefined);
     return NextResponse.json(feed);
   } catch {
     return NextResponse.json({ error: "bad-request" }, { status: 500 });

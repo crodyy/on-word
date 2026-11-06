@@ -1,9 +1,9 @@
 # TIMELINE
 
-Last updated: 2026-11-06 12:43 IST
+Last updated: 2026-11-06 22:00 IST
 
 ## Summary
-Done: 11 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 2
+Done: 12 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 4
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -27,6 +27,9 @@ Done: 11 | In progress: 0 | In review: 6 | Blocked: 0 | Todo: 2
 | T-017 | Security audit M2 (content layer) | Security | T-011, T-014 | DONE | audit done, no CRITICAL/HIGH in content layer (S-001 tracked under T-016) | 2026-11-06 |
 | T-018 | Final build + fresh-identity round trip | Orchestrator | T-015, T-016, T-017 | TODO | `vitest run` green, `npm run build` passes, round trip works (signup, post, comment, extend, 409 x2, 403, 429), Security final sign-off, README caveats written | 2026-11-06 |
 | T-019 | Arkiv hackathon feedback docs (arkiv/*.md) | Orchestrator | - | DONE | four files exist under arkiv/; every technical claim cross-checked against PROMPT.md, AGENTS.md, LOG.md decisions; planned-vs-implemented clearly marked | 2026-11-06 |
+| T-020 | Audit run-2 content-layer fixes (MEDIUM + 3 LOWs) | Backend B | T-008, T-009, T-010 | DONE | comments 5/day throttle with own rate path + 429, releaseSlot compensation on failed writes (posts + comments), upsertCache ingestion filter + prune + archived allowlist re-check, countComments ownedBy(sponsor); vitest 45/45 (6 new), tsc clean, build green | 2026-11-06 |
+| T-021 | Audit run-2 HIGH write-auth (wallet signature/session) | Backend A | T-020 | TODO | wallet-signed nonce/challenge or verify-proof-bound session on all 4 write routes; x-wallet hint only; bound wallet without signature 403s; contract change via Orchestrator | 2026-11-06 |
+| T-022 | Audit run-2 HIGH signup wallet-ownership | Backend A | T-021 | TODO | injected-wallet only (no manual paste), wallet signature over server challenge before register(), strict fail-closed signal/action; unowned-address and omitted-signal_hash bindings fail | 2026-11-06 |
 
 ## Milestones
 - [ ] M1 Registry + RP signature (T-003, T-005, T-016 partial)

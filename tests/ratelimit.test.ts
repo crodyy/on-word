@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { checkAndRecord, RateLimitedError } from "../lib/arkiv/rateLimit";
+import { checkAndRecord, RateLimitedError, releaseSlot } from "../lib/arkiv/rateLimit";
 
 describe("rate limit", () => {
   let dir: string;
@@ -38,5 +38,14 @@ describe("rate limit", () => {
     expect(fulfilled).toHaveLength(5);
     expect(rejected).toHaveLength(1);
     expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(RateLimitedError);
+  });
+
+  it("releaseSlot frees one hit so a failed write does not burn quota", async () => {
+    const wallet = "0xAbC12300000000000000000000000000000000dE";
+    for (let i = 0; i < 5; i++) {
+      await checkAndRecord(wallet, { path, now: 1000 + i });
+    }
+    await releaseSlot(wallet, { path });
+    await checkAndRecord(wallet, { path, now: 2000 });
   });
 });

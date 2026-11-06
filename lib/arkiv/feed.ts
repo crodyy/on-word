@@ -113,6 +113,9 @@ export function splitFeed(
   for (const c of cache.posts) {
     if (liveKeys.has(c.key)) continue;
     if (BigInt(c.expiresAtBlock) > currentBlock) continue;
+    // Archived rows must pass the same allowlist as live: the cache may
+    // hold sponsor-owned rows with unregistered authors (hidden while live).
+    if (!allowlist.has(c.owner.toLowerCase())) continue;
     archived.push({
       key: c.key,
       title: c.title,
@@ -125,9 +128,12 @@ export function splitFeed(
   return { posts, archived };
 }
 
-export function upsertCache(cache: FeedCache, live: ChainPost[]): FeedCache {
+export function upsertCache(cache: FeedCache, live: ChainPost[], allowlist?: Set<string>): FeedCache {
   const seen = new Map(cache.posts.map((p) => [p.key, p]));
   for (const p of live) {
+    // Never ingest rows whose author is not registered: they are hidden
+    // while live and must not surface from the cache after expiry.
+    if (allowlist && !allowlist.has(p.author.toLowerCase())) continue;
     seen.set(p.key, {
       key: p.key,
       title: p.title,
@@ -138,6 +144,8 @@ export function upsertCache(cache: FeedCache, live: ChainPost[]): FeedCache {
   }
   const out: FeedCache["posts"] = [];
   seen.forEach((p) => {
+    // Prune rows cached before the ingestion filter existed.
+    if (allowlist && !allowlist.has(p.owner.toLowerCase())) return;
     out.push(p);
   });
   return { version: 2, posts: out };
@@ -183,9 +191,9 @@ export async function fetchLivePosts(sponsor: Hex): Promise<{ posts: ChainPost[]
   return { posts, currentBlock };
 }
 
-export async function countComments(postKey: string): Promise<number> {
+export async function countComments(postKey: string, sponsor: Hex): Promise<number> {
   const { eq } = await import("@arkiv-network/sdk/query");
-  const n = await publicClient.count().from(Comments).where(eq("postKey", postKey)).fetch();
+  const n = await publicClient.count().from(Comments).ownedBy(sponsor).where(eq("postKey", postKey)).fetch();
   return Number(n);
 }
 

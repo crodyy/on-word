@@ -68,3 +68,22 @@ export async function checkAndRecord(wallet: string, opts: RateLimitOptions): Pr
     await rename(tmp, opts.path);
   });
 }
+
+// Frees one recorded hit for the wallet (compensation for a failed chain
+// write so it does not permanently burn daily quota). Serialized on the same
+// per-path queue as checkAndRecord.
+export async function releaseSlot(wallet: string, opts: RateLimitOptions): Promise<void> {
+  return serialize(opts.path, async () => {
+    const windowMs = opts.windowMs ?? WINDOW_MS;
+    const now = opts.now ?? Date.now();
+    const key = wallet.toLowerCase();
+    const state = await readState(opts.path);
+    const recent = (state.hits[key] ?? []).filter((t) => now - t < windowMs);
+    recent.pop();
+    state.hits[key] = recent;
+    await mkdir(dirname(opts.path), { recursive: true });
+    const tmp = `${opts.path}.${process.pid}.tmp`;
+    await writeFile(tmp, JSON.stringify(state), "utf8");
+    await rename(tmp, opts.path);
+  });
+}

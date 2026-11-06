@@ -289,3 +289,8 @@
 - What: Removed dark mode completely: header toggle button, app/lib/theme.ts (deleted), theme-init blocking script and suppressHydrationWarning in layout, .dark variable overrides and .dark placeholder CSS. Single light theme only; no dark: variants existed.
 - Evidence: grep finds no theme/dark references outside Tailwind @theme; typecheck clean, vitest 39/39, build green.
 - Needs: user approval to push.
+
+## 2026-11-06 22:00 IST | Backend B | T-020 | COMMITTED (push approval pending)
+- What: Fixed audit run-2 content layer (1 MEDIUM + 3 LOWs) with TDD. Comments now throttled 5/day on their own rate path (429 before any chain read); releaseSlot() compensates failed writes on posts + comments + parent-miss paths so quota is only burned by successful writes; upsertCache filters/prunes non-allowlisted rows at ingestion and splitFeed re-checks the allowlist for archived rows; countComments scoped with ownedBy(sponsor).
+- Evidence: RED watched (3 failures for the right reasons: releaseSlot missing, 2 allowlist), then GREEN: vitest 45/45 across 8 files (6 new tests), tsc clean, build green. Only Backend B files touched; SiteHeader/layout edits and security-audit/ left out of the commit.
+- Needs: user approval to push; HIGHs T-021/T-022 need the auth-design decision (wallet-signed challenge vs session).

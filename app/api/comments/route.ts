@@ -5,8 +5,11 @@ import type { Hex } from "viem";
 import { getDefaultStore } from "@/lib/registry/store";
 import { createCommentEntity, fetchParentPost, validateCommentInput } from "@/lib/arkiv/comments";
 import { getSponsorAddress, publicClient } from "@/lib/arkiv/client";
+import { checkAndRecord, RateLimitedError, releaseSlot } from "@/lib/arkiv/rateLimit";
 import { Comments } from "@/lib/arkiv/schemas";
 import type { ApiError, CommentsResponse, CreateCommentResponse } from "@/lib/types";
+
+const COMMENT_RATE_PATH = process.env.COMMENT_RATELIMIT_PATH ?? "./data/ratelimit-comments.json";
 
 export async function GET(req: NextRequest): Promise<NextResponse<CommentsResponse | ApiError>> {
   const postKey = req.nextUrl.searchParams.get("postKey");
@@ -72,15 +75,30 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateComment
     return NextResponse.json({ error: "bad-request" }, { status: 400 });
   }
 
+  // Throttle before any chain read: throttled callers cost us nothing.
+  try {
+    await checkAndRecord(binding.wallet, { path: COMMENT_RATE_PATH });
+  } catch (err) {
+    if (err instanceof RateLimitedError) {
+      return NextResponse.json({ error: "rate-limited" }, { status: 429 });
+    }
+    throw err;
+  }
+
   let parent;
   try {
     parent = await fetchParentPost(body.postKey);
   } catch {
+    await releaseSlot(binding.wallet, { path: COMMENT_RATE_PATH }).catch(() => undefined);
     return NextResponse.json({ error: "bad-request" }, { status: 400 });
   }
-  if (!parent) return NextResponse.json({ error: "not-found" }, { status: 404 });
+  if (!parent) {
+    await releaseSlot(binding.wallet, { path: COMMENT_RATE_PATH }).catch(() => undefined);
+    return NextResponse.json({ error: "not-found" }, { status: 404 });
+  }
   const timing = await publicClient.getBlockTiming().catch(() => undefined);
   if (!timing || parent.expiresAtBlock <= timing.currentBlock) {
+    await releaseSlot(binding.wallet, { path: COMMENT_RATE_PATH }).catch(() => undefined);
     return NextResponse.json({ error: "not-found" }, { status: 404 });
   }
 
@@ -92,6 +110,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateComment
     });
     return NextResponse.json({ entityKey: res.entityKey });
   } catch (err) {
+    // Failed chain writes must not burn daily quota.
+    await releaseSlot(binding.wallet, { path: COMMENT_RATE_PATH }).catch(() => undefined);
     if (err instanceof EntityMutationError) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }

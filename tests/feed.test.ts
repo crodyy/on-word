@@ -17,7 +17,9 @@ const CURRENT = BigInt(1000000);
 function post(over: Partial<ChainPost> = {}): ChainPost {
   return {
     key: "0xkey1",
-    owner: "0xSponsor",
+    // Production invariant (feed.ts fetchLivePosts): owner is the author,
+    // because the sponsor signs every write. Tests must keep them equal.
+    owner: "0xAuthor",
     author: "0xAuthor",
     postKey: "probe-1",
     title: "hello",
@@ -65,6 +67,26 @@ describe("feed split", () => {
     const cache = upsertCache(emptyCache(), [post()]);
     const { archived } = splitFeed([], new Set(["0xauthor"]), CURRENT, new Map(), cache);
     expect(archived).toEqual([]);
+  });
+
+  it("keeps a spoof-cached-then-expired row hidden in archived", () => {
+    const spoof = post({ key: "0xspoof", author: "0xUnboundSpoof", owner: "0xUnboundSpoof" });
+    const cache = upsertCache(emptyCache(), [spoof], new Set(["0xauthor"]));
+    const { posts, archived } = splitFeed(
+      [],
+      new Set(["0xauthor"]),
+      CURRENT + BigInt(43201),
+      new Map(),
+      cache,
+    );
+    expect(posts).toEqual([]);
+    expect(archived).toEqual([]);
+  });
+
+  it("upsertCache drops unregistered-author rows at ingestion", () => {
+    const spoof = post({ key: "0xspoof", author: "0xUnboundSpoof", owner: "0xUnboundSpoof" });
+    const cache = upsertCache(emptyCache(), [post(), spoof], new Set(["0xauthor"]));
+    expect(cache.posts.map((p) => p.key)).toEqual(["0xkey1"]);
   });
 
   it("round-trips the cache file", async () => {

@@ -175,6 +175,21 @@
 - Evidence: curl /api/posts {posts:[],archived:[]}; cache.json held probe entity pre-cleanup; vitest 30 passed; tsc clean.
 - Needs: commit; push approval; then T-010 (deps T-007 DONE).
 
+## 2026-11-06 14:35 IST | Orchestrator | T-009 | DECISION
+- What: User approved push ("push it"). Pushed 4f070fc to origin master: e92b921..4f070fc Done.
+- Evidence: push porcelain output.
+- Needs: none.
+
+## 2026-11-06 14:35 IST | Orchestrator | T-010 | STARTED
+- What: Backend B lane. POST /api/comments (fixed 7d, parent must exist and be unexpired, bound wallet only). No comment edit/extend routes by design.
+- Evidence: n/a (start).
+- Needs: unit tests (validation, parent checks) plus one live fixed-expiry comment on the probe post.
+
+## 2026-11-06 14:40 IST | Orchestrator | T-010 | DONE
+- What: Wrote lib/arkiv/comments.ts (validateCommentInput 1B..5KB, fetchParentPost by postKey under ownedBy(sponsor), fixed fromDays(7) create) and app/api/comments/route.ts (x-wallet binding 403, shape/validation 400, missing-or-expired parent 404, EntityMutationError to generic 403). Parent check deliberately skips the allowlist: comments on hidden posts stay hidden with them, and the probe post stays usable. No comment edit/extend routes exist anywhere (only app/api/comments/route.ts). Live probe on the probe post: parent found (expiresAt 326542), comment entity 0x9fc72630.., expiresAt delta exactly 302402 blocks (7d at 2s), tx 0x68f49b5b.. success, count on parent now 1.
+- Evidence: https://rabdi.explorer.arkiv.network/tx/0x68f49b5b6128f7fcffc23f3ac7db22cbc447274e7420bb25f57030912ed72dad; vitest 32 passed; tsc clean.
+- Needs: commit; push approval; then T-011 (deps T-008 code done).
+
 ## 2026-11-06 14:12 IST | Orchestrator | T-007 | DONE
 - What: Wrote lib/arkiv/schemas.ts (Posts and Comments per PROMPT.md section 4, addr/postKey indexed, body bytes) and lib/arkiv/posts.ts (canonical server write path: days allowlist, 128B title, 5KB body, sponsor-signed createEntity). SDK usage confirmed against installed 1.0.1 types (addr().indexed(), createEntity values, ExpirationTime.fromDays). Probe script scripts/probe-create.mjs mirrors it in plain .mjs (node cannot resolve extensionless TS imports). Live 1-day probe entity from an unregistered wallet (never feed-visible): entityKey 0xb6e0a98dbe2aea5b85c35c38b4d45f62b3b63213b4f132dcd295683e14a3b051, expiresAt block 326542, tx 0x5bf37f04c3d04801215931bda9ea96374c7fab18816e11cc5607cab270df7984 status success.
 - Evidence: https://rabdi.explorer.arkiv.network/tx/0x5bf37f04c3d04801215931bda9ea96374c7fab18816e11cc5607cab270df7984, receipt status success.

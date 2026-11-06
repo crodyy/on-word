@@ -139,3 +139,18 @@
 - What: TDD done. Wrote tests/verify.test.ts first (8 tests: valid bind, tampered signal, worldid-reused, wallet-reused, verify-failed, env mismatch x2, action mismatch), red on missing module, then lib/worldid/verify.ts (forwards IDKit result as-is to /api/v4/verify/{rp_id}, checks env/action/signal_hash via hashSignal(walletLower), extracts nullifier, registerBinding maps 409s). Docs used: verify API page (forward as-is, rp_id path, success shape) plus signatures page (hash_to_field vectors match hashSignal semantics) plus local hashSignal. Fixed type errors (signal_hash narrowing, err unknown narrowing). 16/16 green, typecheck clean, build passes with /api/verify-proof route. Wrote app/api/verify-proof/route.ts (400 verify-failed, 409 worldid-reused/wallet-reused, never logs nullifier).
 - Evidence: vitest 16 passed; tsc clean; next build route table shows /api/verify-proof.
 - Needs: simulator e2e with user (signup x2: first 200 ok:true, second 409 worldid-reused; reused wallet 409 wallet-reused). Commit and push approval, then T-007 unblocked (deps T-001 and T-002 DONE).
+
+## 2026-11-06 14:05 IST | Orchestrator | T-006 | DECISION
+- What: User approved push ("push it"). Pushed f195394 to origin master: df9c369..f195394 Done.
+- Evidence: push porcelain output.
+- Needs: none.
+
+## 2026-11-06 14:05 IST | Orchestrator | T-007 | STARTED
+- What: Backend B lane. Schemas plus server write path per PROMPT.md section 4 and the docs (defineSchema, ExpirationTime, sponsor-owned per Q1 DECISION).
+- Evidence: n/a (start).
+- Needs: schema shapes from spec, createEntity test on Rabdi with tx hash.
+
+## 2026-11-06 14:12 IST | Orchestrator | T-007 | DONE
+- What: Wrote lib/arkiv/schemas.ts (Posts and Comments per PROMPT.md section 4, addr/postKey indexed, body bytes) and lib/arkiv/posts.ts (canonical server write path: days allowlist, 128B title, 5KB body, sponsor-signed createEntity). SDK usage confirmed against installed 1.0.1 types (addr().indexed(), createEntity values, ExpirationTime.fromDays). Probe script scripts/probe-create.mjs mirrors it in plain .mjs (node cannot resolve extensionless TS imports). Live 1-day probe entity from an unregistered wallet (never feed-visible): entityKey 0xb6e0a98dbe2aea5b85c35c38b4d45f62b3b63213b4f132dcd295683e14a3b051, expiresAt block 326542, tx 0x5bf37f04c3d04801215931bda9ea96374c7fab18816e11cc5607cab270df7984 status success.
+- Evidence: https://rabdi.explorer.arkiv.network/tx/0x5bf37f04c3d04801215931bda9ea96374c7fab18816e11cc5607cab270df7984, receipt status success.
+- Needs: commit; push approval; then T-008 (deps T-003 and T-007 DONE).

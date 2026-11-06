@@ -3,7 +3,7 @@
 Last updated: 2026-11-06 12:43 IST
 
 ## Summary
-Done: 6 | In progress: 0 | In review: 0 | Blocked: 0 | Todo: 13
+Done: 7 | In progress: 0 | In review: 1 | Blocked: 0 | Todo: 11
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -14,7 +14,7 @@ Done: 6 | In progress: 0 | In review: 0 | Blocked: 0 | Todo: 13
 | T-004 | Shared TS contracts (lib/types.ts) | Orchestrator | T-001 | DONE | `npx tsc --noEmit` clean; types mirror PROMPT.md section 8 (rp-signature, verify-proof, posts, feed, extend/edit, comments, ApiError) | 2026-11-06 |
 | T-005 | POST /api/rp-signature | Backend A | T-001 | DONE | curl good action 200 {sig, nonce, created_at, expires_at}; wrong action 400 bad-action (user replaced RP key with real 32-byte value) | 2026-11-06 |
 | T-006 | POST /api/verify-proof + binding | Backend A | T-003, T-005 | IN_REVIEW | lib/worldid/verify.ts + route written, vitest 16/16 green, build passes; REMAINING: simulator signup x2 with 409s (needs user) | 2026-11-06 |
-| T-007 | Arkiv schemas + server write path | Backend B | T-001, T-002 | TODO | `createEntity(Posts, 1d)` on Rabdi returns entityKey + expiresAt; tx hash visible on https://rabdi.explorer.arkiv.network/; files lib/arkiv/schemas.ts, lib/arkiv/client.ts | 2026-11-06 |
+| T-007 | Arkiv schemas + server write path | Backend B | T-001, T-002 | DONE | live createEntity 1d on Rabdi: entityKey 0xb6e0a9.., expiresAt block 326542, tx 0x5bf37f04.. status success (explorer link in LOG) | 2026-11-06 |
 | T-008 | POST /api/posts + rate limit | Backend B | T-003, T-007 | TODO | bound-wallet curl returns entityKey; body over 5KB rejected; days outside {1,7,30} rejected; unbound wallet 403; files app/api/posts/route.ts, lib/arkiv/rateLimit.ts | 2026-11-06 |
 | T-009 | GET /api/posts feed + cache | Backend B | T-008 | TODO | returns only ownedBy(sponsor) + live + author-in-registry, newest first, Live/Archived split via data/cache.json; spoof entity under same tag from unbound wallet is hidden | 2026-11-06 |
 | T-010 | POST /api/comments (fixed 7d) | Backend B | T-007 | TODO | comment gets 7-day expiry; missing or expired parent rejected; no comment edit/extend routes exist; file app/api/comments/route.ts | 2026-11-06 |

@@ -116,6 +116,8 @@ export interface WorldConfigResponse {
   rp_id: string;
   action: string;
   environment: "staging" | "production" | "sandbox";
+  // TEMP-DEMO: true when the server runs with DEMO_OPEN_ACCESS=true.
+  demoOpenAccess: boolean;
 }
 
 export interface AuthChallengeResponse {

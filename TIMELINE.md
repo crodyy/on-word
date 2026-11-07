@@ -1,9 +1,9 @@
 # TIMELINE
 
-Last updated: 2026-11-07 07:25 IST
+Last updated: 2026-11-07 08:00 IST
 
 ## Summary
-Done: 26 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 0
+Done: 27 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 0
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -42,6 +42,7 @@ Done: 26 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 0
 | T-032 | Brand rename Human-Only Forum to On-Word | Frontend + Orchestrator | - | DONE | PROMPT.md, README.md, layout title/footer, header aria/alt all On-Word; grep clean of old name in UI strings | 2026-11-07 |
 | T-033 | Post-not-found + KV orphan fixes | Backend A + B + Frontend | T-031 | DONE | KV registry compensates nullifier claim on wallet-reused (no stuck lockout); POST write-through caches new row; thread falls back to direct entity read (getEntity) before missing; vitest 76/76, tsc clean, build green | 2026-11-07 |
 | T-034 | Feed read-through for unindexed posts | Backend B | T-033 | DONE | splitFeed shows cached unexpired allowlisted rows as live (newest first) while the chain index lags; RED watched then GREEN; vitest 78/78, tsc clean, build green | 2026-11-07 |
+| T-035 | TEMP-DEMO open access + feed hardening | Orchestrator (cross-lane, user-requested) | T-033 | DONE | DEMO_OPEN_ACCESS flag: writes need signature only, reads skip allowlist, signup wallet-only button; splitFeed null-allowlist + malformed-row guards; vitest 83/83, tsc clean, build green; REMOVE before real launch | 2026-11-07 |
 
 ## Milestones
 - [ ] M1 Registry + RP signature (T-003, T-005, T-016 partial)

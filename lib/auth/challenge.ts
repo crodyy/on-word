@@ -140,6 +140,17 @@ export interface WriteAuthHeaders {
   signature: string | null;
 }
 
+// TEMP-DEMO (T-035): open access for time-pressed testing. When
+// DEMO_OPEN_ACCESS=true the server skips the registry-binding requirement on
+// writes (a fresh wallet signature is still required, so every write stays
+// key-attributed) and the allowlist filter on reads. Default off and
+// fail-closed. Remove before any real launch.
+export function demoOpenAccess(): boolean {
+  return process.env.DEMO_OPEN_ACCESS === "true";
+}
+
+const WALLET_RE = /^0x[0-9a-fA-F]{40}$/;
+
 // Full write gate: the x-wallet header is only a hint. The caller must hold a
 // registry binding AND prove wallet ownership with a fresh signature over a
 // server-issued nonce. Every failure throws ChallengeError so routes map them
@@ -149,6 +160,14 @@ export async function assertWriteAuth(
   opts: { getBinding: (wallet: string) => Promise<{ wallet: string } | undefined>; noncePath: string },
 ): Promise<string> {
   if (!headers.wallet || !headers.nonce || !headers.signature) throw new ChallengeError("missing auth");
+  const walletLower = headers.wallet.toLowerCase();
+  if (demoOpenAccess()) {
+    // Temporary: proof of key ownership only, no registry binding.
+    if (!WALLET_RE.test(headers.wallet)) throw new ChallengeError("bad wallet");
+    await verifyWalletSignature({ wallet: walletLower, nonce: headers.nonce, signature: headers.signature });
+    await consumeChallenge(walletLower, headers.nonce, { path: opts.noncePath });
+    return walletLower;
+  }
   const binding = await opts.getBinding(headers.wallet).catch(() => undefined);
   if (!binding) throw new ChallengeError("unknown wallet");
   // Verify before consuming so a bad signature does not burn a good nonce;

@@ -24,6 +24,15 @@ duplicates, posting as a bound wallet, the 6-post 429 run, owner extend/edit
 success). The code paths are tested with mocks; they wait for a Developer Portal
 setup plus a simulator pass.
 
+## Temporary demo access (T-035, remove before any real launch)
+
+Set `DEMO_OPEN_ACCESS=true` (local `.env.local` AND Vercel Settings ->
+Environment Variables, then redeploy) to skip World ID checks while testing:
+reads show every sponsor post, writes need only a fresh wallet signature
+(still key-attributed, still rate-limited), and the signup page offers
+"Continue with wallet only". Default off. With it on, one wallet equals one
+account and there is no human-uniqueness gate.
+
 ## Setup
 
 1. Copy `.env.example` to `.env.local` and fill it in. Server values stay

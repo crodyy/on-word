@@ -184,6 +184,24 @@ export default function SignupPage() {
             Verified and bound. <Link href="/feed" className="underline">Go to the feed</Link>
           </p>
         ) : null}
+        {configured && cfg?.demoOpenAccess && !done ? (
+          <button
+            onClick={() => {
+              if (!walletOk) {
+                setError("Connect your wallet first.");
+                return;
+              }
+              // TEMP-DEMO: wallet-only access, no World ID. The server still
+              // requires a fresh wallet signature on every write.
+              setBoundWallet(wallet.trim());
+              setDone(true);
+            }}
+            disabled={busy || !walletOk}
+            className="btn-press mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--color-line)] px-6 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+          >
+            Continue with wallet only (temporary)
+          </button>
+        ) : null}
       </div>
 
       {rp ? (

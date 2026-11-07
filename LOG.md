@@ -394,3 +394,8 @@
 - What: User said "push". Pushed 8cc6444 to origin master: c50279c..8cc6444 Done (carries 35ef61f log + 8cc6444 T-034 feed read-through).
 - Evidence: push porcelain output.
 - Needs: Vercel redeploy picks up 8cc6444; user confirms KV linkage + friend-409 log reason.
+
+## 2026-11-07 08:00 IST | Orchestrator | T-035 | DONE
+- What: Full-code review pass at user request (low on time, login friction). (1) Feed empty root causes: allowlist hides everything when the prod registry is empty (KV missing or fresh), 1-hour test posts expire fast, and one malformed cache row could previously 500 the whole feed. splitFeed now takes a null allowlist, skips malformed rows, and all four read/write paths honor DEMO_OPEN_ACCESS. (2) TEMP-DEMO bypass: DEMO_OPEN_ACCESS=true removes the World ID binding requirement (writes still need a fresh wallet signature, still rate-limited; reads show all sponsor posts; signup offers wallet-only continue). Cross-lane work done at direct user instruction. New tests: 2 feed (null allowlist, malformed rows) + 3 demo-access (signed OK, bad signature, bad wallet).
+- Evidence: `vitest run` 83/83 across 12 files, `tsc` clean, `npm run build` green (verified 2026-11-07 08:00 IST).
+- Needs: user sets DEMO_OPEN_ACCESS=true in Vercel env + redeploys, then retests feed/posting with wallet-only signup. Still open: KV linkage confirmation, friend-409 log reason. REMOVE the flag before any real launch.

@@ -122,18 +122,21 @@ export async function saveCache(path: string, cache: FeedCache): Promise<void> {
 
 // Pure split: live = chain rows with registered author and unexpired;
 // archived = cached rows now past expiry (expired entities vanish from queries).
+// A null allowlist (TEMP-DEMO open access) allows every row.
 export function splitFeed(
   live: ChainPost[],
-  allowlist: Set<string>,
+  allowlist: Set<string> | null,
   currentBlock: bigint,
   commentCounts: Map<string, number>,
   cache: FeedCache,
 ): { posts: FeedPost[]; archived: FeedPost[] } {
   const toISO = (block: bigint) =>
     new Date(Date.now() + Number(block - currentBlock) * BLOCK_SECONDS * 1000).toISOString();
+  const allowed = (w: unknown): w is string =>
+    typeof w === "string" && (allowlist === null || allowlist.has(w.toLowerCase()));
   const posts: FeedPost[] = [];
   for (const p of live) {
-    if (!allowlist.has(p.author.toLowerCase())) continue;
+    if (!allowed(p.author)) continue;
     if (p.expiresAtBlock <= currentBlock) continue;
     posts.push({
       key: p.key,
@@ -150,13 +153,18 @@ export function splitFeed(
   // post sits only in the write-through cache) still show as live while
   // unexpired. Every cached row passed the allowlist at ingestion, and the
   // write-through row is server-created from verified input. Newest first.
+  // Malformed rows are skipped so one bad cache entry can never empty the feed.
   const pending = cache.posts
-    .filter(
-      (c) =>
-        !liveKeys.has(c.key) &&
-        BigInt(c.expiresAtBlock) > currentBlock &&
-        allowlist.has(c.owner.toLowerCase()),
-    )
+    .filter((c) => {
+      if (liveKeys.has(c.key) || typeof c.owner !== "string" || typeof c.expiresAtBlock !== "string") {
+        return false;
+      }
+      try {
+        return BigInt(c.expiresAtBlock) > currentBlock && allowed(c.owner);
+      } catch {
+        return false;
+      }
+    })
     .sort((a, b) => (a.postKey < b.postKey ? 1 : a.postKey > b.postKey ? -1 : 0))
     .map((c) => ({
       key: c.key,
@@ -171,16 +179,22 @@ export function splitFeed(
   const archived: FeedPost[] = [];
   for (const c of cache.posts) {
     if (liveKeys.has(c.key)) continue;
-    if (BigInt(c.expiresAtBlock) > currentBlock) continue;
+    let exp: bigint;
+    try {
+      exp = BigInt(c.expiresAtBlock as string);
+    } catch {
+      continue;
+    }
+    if (exp > currentBlock) continue;
     // Archived rows must pass the same allowlist as live: the cache may
     // hold sponsor-owned rows with unregistered authors (hidden while live).
-    if (!allowlist.has(c.owner.toLowerCase())) continue;
+    if (!allowed(c.owner)) continue;
     archived.push({
       key: c.key,
       title: c.title,
       excerpt: c.excerpt ?? "",
       owner: c.owner,
-      expiresAt: toISO(BigInt(c.expiresAtBlock)),
+      expiresAt: toISO(exp),
       commentCount: 0,
       expired: true,
     });
@@ -188,11 +202,12 @@ export function splitFeed(
   return { posts, archived };
 }
 
-export function upsertCache(cache: FeedCache, live: ChainPost[], allowlist?: Set<string>): FeedCache {
+export function upsertCache(cache: FeedCache, live: ChainPost[], allowlist?: Set<string> | null): FeedCache {
   const seen = new Map(cache.posts.map((p) => [p.key, p]));
   for (const p of live) {
     // Never ingest rows whose author is not registered: they are hidden
     // while live and must not surface from the cache after expiry.
+    // A null allowlist (TEMP-DEMO open access) ingests everything.
     if (allowlist && !allowlist.has(p.author.toLowerCase())) continue;
     seen.set(p.key, {
       key: p.key,
@@ -270,7 +285,7 @@ export async function countComments(parentKey: string, sponsor: Hex): Promise<nu
 export async function fetchPostDetail(
   entityKey: string,
   sponsor: Hex,
-  allowlist: Set<string>,
+  allowlist: Set<string> | null,
 ): Promise<ThreadPostDetail | undefined> {
   if (!/^0x[0-9a-fA-F]{64}$/.test(entityKey)) return undefined;
   let e: Record<string, unknown>;
@@ -282,7 +297,7 @@ export async function fetchPostDetail(
   const owner = colVal(e.$owner);
   if (owner.toLowerCase() !== sponsor.toLowerCase()) return undefined;
   const author = colVal(e.author);
-  if (!allowlist.has(author.toLowerCase())) return undefined;
+  if (allowlist !== null && !allowlist.has(author.toLowerCase())) return undefined;
   const expiresAtBlock = BigInt(String(e.$expiresAt));
   const timing = await publicClient.getBlockTiming();
   const expired = expiresAtBlock <= timing.currentBlock;

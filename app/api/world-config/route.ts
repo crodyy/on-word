@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { demoOpenAccess } from "@/lib/auth/challenge";
 import type { ApiError, WorldConfigResponse } from "@/lib/types";
 
 const FALLBACK_ACTION = "human-forum-register-v1";
@@ -32,5 +33,6 @@ export async function GET(): Promise<
     rp_id: rpId,
     action,
     environment,
+    demoOpenAccess: demoOpenAccess(),
   });
 }

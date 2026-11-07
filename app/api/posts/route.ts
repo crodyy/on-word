@@ -8,6 +8,7 @@ import { assertWriteAuth } from "@/lib/auth/challenge";
 import { checkAndRecord, RateLimitedError, releaseSlot } from "@/lib/arkiv/rateLimit";
 import { countComments, fetchLivePosts, loadCache, saveCache, splitFeed, upsertCache } from "@/lib/arkiv/feed";
 import type { ChainPost } from "@/lib/arkiv/feed";
+import { demoOpenAccess } from "@/lib/auth/challenge";
 import { getSponsorAddress } from "@/lib/arkiv/client";
 import type { ApiError, CreatePostResponse, FeedResponse } from "@/lib/types";
 
@@ -98,9 +99,12 @@ const CACHE_PATH = process.env.FEED_CACHE_PATH ?? "./data/cache.json";
 export async function GET(): Promise<NextResponse<FeedResponse | ApiError>> {
   try {
     const sponsor = getSponsorAddress();
-    const allowlist = new Set(
-      (await getDefaultStore().getAllowlist()).map((w) => w.toLowerCase()),
-    );
+    // TEMP-DEMO open access skips the allowlist (reads show every post).
+    const allowlist = demoOpenAccess()
+      ? null
+      : new Set(
+          (await getDefaultStore().getAllowlist()).map((w) => w.toLowerCase()),
+        );
     const { posts, currentBlock } = await fetchLivePosts(sponsor);
     const cache = await loadCache(CACHE_PATH);
     const counts = new Map<string, number>();

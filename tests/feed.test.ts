@@ -78,6 +78,38 @@ describe("feed split", () => {
     expect(posts).toHaveLength(1);
   });
 
+  it("shows every row when the allowlist is null (demo open access)", () => {
+    const live = [post(), post({ key: "0xkey2", postKey: "probe-2", author: "0xStranger", owner: "0xStranger" })];
+    const { posts } = splitFeed(live, null, CURRENT, new Map(), emptyCache());
+    expect(posts).toHaveLength(2);
+  });
+
+  it("skips malformed cache rows instead of throwing", () => {
+    const cache = emptyCache();
+    cache.posts.push({
+      key: "0xbad-owner",
+      title: "bad",
+      excerpt: "bad",
+      owner: undefined as unknown as string,
+      postKey: "bad-1",
+      expiresAtBlock: (CURRENT + BigInt(43200)).toString(),
+    });
+    cache.posts.push({
+      key: "0xbad-block",
+      title: "bad",
+      excerpt: "bad",
+      owner: "0xauthor",
+      postKey: "bad-2",
+      expiresAtBlock: "not-a-block",
+    });
+    let result;
+    expect(() => {
+      result = splitFeed([], null, CURRENT, new Map(), cache);
+    }).not.toThrow();
+    expect(result!.posts).toHaveLength(0);
+    expect(result!.archived).toHaveLength(0);
+  });
+
   it("hides unbound-author spoof entities", () => {
     const { posts } = splitFeed(
       [post({ author: "0xUnboundSpoof" })],

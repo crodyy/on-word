@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDefaultStore } from "@/lib/registry/store";
 import { fetchPostDetail } from "@/lib/arkiv/feed";
+import { demoOpenAccess } from "@/lib/auth/challenge";
 import { getSponsorAddress } from "@/lib/arkiv/client";
 import type { ApiError, ThreadPost } from "@/lib/types";
 
@@ -12,9 +13,11 @@ export async function GET(
     return NextResponse.json({ error: "not-found" }, { status: 404 });
   }
   try {
-    const allowlist = new Set(
-      (await getDefaultStore().getAllowlist()).map((w) => w.toLowerCase()),
-    );
+    const allowlist = demoOpenAccess()
+      ? null
+      : new Set(
+          (await getDefaultStore().getAllowlist()).map((w) => w.toLowerCase()),
+        );
     const detail = await fetchPostDetail(params.key, getSponsorAddress(), allowlist);
     if (!detail) return NextResponse.json({ error: "not-found" }, { status: 404 });
     return NextResponse.json({

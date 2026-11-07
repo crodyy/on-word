@@ -4,7 +4,7 @@ import { eq } from "@arkiv-network/sdk/query";
 import type { Hex } from "viem";
 import { getDefaultStore } from "@/lib/registry/store";
 import { createCommentEntity, fetchParentPost, validateCommentInput } from "@/lib/arkiv/comments";
-import { assertWriteAuth } from "@/lib/auth/challenge";
+import { assertWriteAuth, demoOpenAccess } from "@/lib/auth/challenge";
 import { getSponsorAddress, publicClient } from "@/lib/arkiv/client";
 import { checkAndRecord, RateLimitedError, releaseSlot } from "@/lib/arkiv/rateLimit";
 import { Comments } from "@/lib/arkiv/schemas";
@@ -17,9 +17,11 @@ export async function GET(req: NextRequest): Promise<NextResponse<CommentsRespon
   const postKey = req.nextUrl.searchParams.get("postKey");
   if (!postKey) return NextResponse.json({ error: "bad-request" }, { status: 400 });
   try {
-    const allowlist = new Set(
-      (await getDefaultStore().getAllowlist()).map((w) => w.toLowerCase()),
-    );
+    const allowlist = demoOpenAccess()
+      ? null
+      : new Set(
+          (await getDefaultStore().getAllowlist()).map((w) => w.toLowerCase()),
+        );
     const timing = await publicClient.getBlockTiming();
     const page = await publicClient
       .select({ $key: true, $expiresAt: true, author: true, body: true })
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<CommentsRespon
     for (const e of page.entities) {
       const r = e as unknown as Record<string, unknown>;
       const author = String((r.author as { value: unknown }).value ?? r.author);
-      if (!allowlist.has(author.toLowerCase())) continue;
+      if (allowlist !== null && !allowlist.has(author.toLowerCase())) continue;
       if (BigInt(String(r.$expiresAt)) <= timing.currentBlock) continue;
       const raw = (r.body as { value: unknown }).value ?? r.body;
       const text =

@@ -389,3 +389,8 @@
 - What: Feed showed "No live posts yet" right after publishing because the live section came only from the chain query index. splitFeed now read-throughs cached unexpired allowlisted rows as live (newest first, no dupes once indexed). Write-through (T-033) feeds it, so a new post appears in the feed instantly.
 - Evidence: new lag test failed before the fix (1 failed/14 passed), GREEN after; `vitest run` 78/78 across 11 files, `tsc` clean, `npm run build` green (verified 2026-11-07 07:25 IST). Note: comment counts on not-yet-indexed rows read 0 until the chain catches up.
 - Needs: user approval to push (35ef61f plus this commit).
+
+## 2026-11-07 07:30 IST | Orchestrator | push | DECISION (push approved)
+- What: User said "push". Pushed 8cc6444 to origin master: c50279c..8cc6444 Done (carries 35ef61f log + 8cc6444 T-034 feed read-through).
+- Evidence: push porcelain output.
+- Needs: Vercel redeploy picks up 8cc6444; user confirms KV linkage + friend-409 log reason.

@@ -146,6 +146,28 @@ export function splitFeed(
     });
   }
   const liveKeys = new Set(live.map((p) => p.key));
+  // Read-through: rows the query index does not have yet (a just-published
+  // post sits only in the write-through cache) still show as live while
+  // unexpired. Every cached row passed the allowlist at ingestion, and the
+  // write-through row is server-created from verified input. Newest first.
+  const pending = cache.posts
+    .filter(
+      (c) =>
+        !liveKeys.has(c.key) &&
+        BigInt(c.expiresAtBlock) > currentBlock &&
+        allowlist.has(c.owner.toLowerCase()),
+    )
+    .sort((a, b) => (a.postKey < b.postKey ? 1 : a.postKey > b.postKey ? -1 : 0))
+    .map((c) => ({
+      key: c.key,
+      title: c.title,
+      excerpt: c.excerpt ?? "",
+      owner: c.owner,
+      expiresAt: toISO(BigInt(c.expiresAtBlock)),
+      commentCount: commentCounts.get(c.key) ?? 0,
+      expired: false,
+    }));
+  posts.unshift(...pending);
   const archived: FeedPost[] = [];
   for (const c of cache.posts) {
     if (liveKeys.has(c.key)) continue;

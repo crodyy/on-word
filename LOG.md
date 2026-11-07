@@ -384,3 +384,8 @@
 - What: User said "push". Pushed c50279c to origin master: e01255a..c50279c Done (carries 6795b59 board update + c50279c T-033 fixes).
 - Evidence: push porcelain output.
 - Needs: Vercel redeploy picks up c50279c; user confirms KV linkage + friend-409 log reason.
+
+## 2026-11-07 07:25 IST | Backend B | T-034 | DONE
+- What: Feed showed "No live posts yet" right after publishing because the live section came only from the chain query index. splitFeed now read-throughs cached unexpired allowlisted rows as live (newest first, no dupes once indexed). Write-through (T-033) feeds it, so a new post appears in the feed instantly.
+- Evidence: new lag test failed before the fix (1 failed/14 passed), GREEN after; `vitest run` 78/78 across 11 files, `tsc` clean, `npm run build` green (verified 2026-11-07 07:25 IST). Note: comment counts on not-yet-indexed rows read 0 until the chain catches up.
+- Needs: user approval to push (35ef61f plus this commit).

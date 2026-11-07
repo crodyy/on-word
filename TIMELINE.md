@@ -1,9 +1,9 @@
 # TIMELINE
 
-Last updated: 2026-11-07 07:00 IST
+Last updated: 2026-11-07 07:25 IST
 
 ## Summary
-Done: 25 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 0
+Done: 26 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 0
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -41,6 +41,7 @@ Done: 25 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 0
 | T-031 | KV-backed state (registry, nonces, rate limits, feed cache) | Backend A + B | T-003, T-021 | DONE | `vitest run` 75/75 (11 new kv-state tests), `tsc` clean, `npm run build` green; file backend kept for local dev, KV used when configured | 2026-11-07 |
 | T-032 | Brand rename Human-Only Forum to On-Word | Frontend + Orchestrator | - | DONE | PROMPT.md, README.md, layout title/footer, header aria/alt all On-Word; grep clean of old name in UI strings | 2026-11-07 |
 | T-033 | Post-not-found + KV orphan fixes | Backend A + B + Frontend | T-031 | DONE | KV registry compensates nullifier claim on wallet-reused (no stuck lockout); POST write-through caches new row; thread falls back to direct entity read (getEntity) before missing; vitest 76/76, tsc clean, build green | 2026-11-07 |
+| T-034 | Feed read-through for unindexed posts | Backend B | T-033 | DONE | splitFeed shows cached unexpired allowlisted rows as live (newest first) while the chain index lags; RED watched then GREEN; vitest 78/78, tsc clean, build green | 2026-11-07 |
 
 ## Milestones
 - [ ] M1 Registry + RP signature (T-003, T-005, T-016 partial)

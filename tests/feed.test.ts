@@ -46,6 +46,38 @@ describe("feed split", () => {
     expect(archived).toEqual([]);
   });
 
+  it("shows cached unexpired rows as live while the chain index lags", () => {
+    // POST write-through caches our row before the query index has it.
+    const cache = emptyCache();
+    cache.posts.push({
+      key: "0xkey9",
+      title: "Fresh",
+      excerpt: "Fresh body",
+      owner: "0xauthor",
+      postKey: "fresh-9",
+      expiresAtBlock: (CURRENT + BigInt(43200)).toString(),
+    });
+    const { posts, archived } = splitFeed([], new Set(["0xauthor"]), CURRENT, new Map(), cache);
+    expect(posts).toHaveLength(1);
+    expect(posts[0].key).toBe("0xkey9");
+    expect(posts[0].expired).toBe(false);
+    expect(archived).toEqual([]);
+  });
+
+  it("does not duplicate cached rows once the chain index has them", () => {
+    const cache = emptyCache();
+    cache.posts.push({
+      key: "0xkey1",
+      title: "hello",
+      excerpt: "hello world body",
+      owner: "0xauthor",
+      postKey: "probe-1",
+      expiresAtBlock: (CURRENT + BigInt(43200)).toString(),
+    });
+    const { posts } = splitFeed([post()], new Set(["0xauthor"]), CURRENT, new Map(), cache);
+    expect(posts).toHaveLength(1);
+  });
+
   it("hides unbound-author spoof entities", () => {
     const { posts } = splitFeed(
       [post({ author: "0xUnboundSpoof" })],

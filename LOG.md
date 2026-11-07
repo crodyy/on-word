@@ -379,3 +379,8 @@
 - What: Fixed all three pre-approval items. (1) Env paths: with KV configured the *_PATH vars are only quota-bucket names or ignored; without KV everything is per-instance files. Documented KV vars in .env.example. (2) Friend 409: registry KV path had a partial-write orphan (nullifier claimed, wallet insert failed -> stuck worldid-reused); now compensated with hdel, RED watched then GREEN. If the friend's error was worldid-reused on a fresh identity, check Vercel logs for `[verify-proof] failed` to discriminate a shared simulator identity (expected 409, one human one wallet) from a stuck orphan. (3) Post-not-found after publish: POST now write-through caches its own row, thread confirms via direct getEntity read before missing, fetchPostDetail uses getEntity instead of the lagging query index.
 - Evidence: new orphan test failed before the fix (1 failed/11 passed) and passes after; `vitest run` 76/76 across 11 files, `tsc` clean, `npm run build` green (verified 2026-11-07 07:00 IST). Cross-lane edits made at direct user request.
 - Needs: user approval to push (6795b59 plus this commit); user to confirm KV store is linked in Vercel (Dashboard -> Storage, KV_REST_API_URL/TOKEN in env) and report the `[verify-proof] failed` reason from Vercel logs for the friend's 409.
+
+## 2026-11-07 07:05 IST | Orchestrator | push | DECISION (push approved)
+- What: User said "push". Pushed c50279c to origin master: e01255a..c50279c Done (carries 6795b59 board update + c50279c T-033 fixes).
+- Evidence: push porcelain output.
+- Needs: Vercel redeploy picks up c50279c; user confirms KV linkage + friend-409 log reason.

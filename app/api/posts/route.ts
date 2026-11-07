@@ -7,6 +7,7 @@ import { createPostEntity, validatePostInput } from "@/lib/arkiv/posts";
 import { assertWriteAuth } from "@/lib/auth/challenge";
 import { checkAndRecord, RateLimitedError, releaseSlot } from "@/lib/arkiv/rateLimit";
 import { countComments, fetchLivePosts, loadCache, saveCache, splitFeed, upsertCache } from "@/lib/arkiv/feed";
+import type { ChainPost } from "@/lib/arkiv/feed";
 import { getSponsorAddress } from "@/lib/arkiv/client";
 import type { ApiError, CreatePostResponse, FeedResponse } from "@/lib/types";
 
@@ -65,6 +66,22 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreatePostRes
       body: body.body,
       ...(typeof body.hours === "number" ? { hours: body.hours } : { days: body.days as number }),
     });
+    // Write-through: the chain query index can lag behind a fresh write and
+    // the thread view gates on the feed, so cache our own row immediately.
+    // No allowlist filter: the row is server-created from verified input.
+    // Cache failures must not fail the publish.
+    const cacheRow: ChainPost = {
+      key: res.entityKey,
+      owner: wallet.toLowerCase(),
+      author: wallet.toLowerCase(),
+      postKey,
+      title: body.title,
+      body: body.body,
+      expiresAtBlock: res.expiresAt,
+    };
+    await loadCache(CACHE_PATH)
+      .then((cache) => saveCache(CACHE_PATH, upsertCache(cache, [cacheRow])))
+      .catch(() => undefined);
     return NextResponse.json({ entityKey: res.entityKey });
   } catch (err) {
     // Failed chain writes must not burn daily quota.

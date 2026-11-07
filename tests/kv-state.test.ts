@@ -67,6 +67,14 @@ class FakeKv implements KvLike {
     return Array.from(this.hashes.get(key)?.keys() ?? []);
   }
 
+  async hdel(key: string, ...fields: string[]): Promise<number> {
+    const h = this.hashes.get(key);
+    if (!h) return 0;
+    let n = 0;
+    for (const f of fields) if (h.delete(f)) n += 1;
+    return n;
+  }
+
   async compareDel(key: string, expected: string): Promise<number> {
     const current = await this.get(key);
     if (current === null || current !== expected) return 0;
@@ -147,6 +155,21 @@ describe("kv-backed registry", () => {
       .catch((e) => e);
     expect(err).toBeInstanceOf(RegistryError);
     expect(err.code).toBe("wallet-reused");
+  });
+
+  it("does not orphan the nullifier when the wallet is already bound", async () => {
+    const store = createRegistryStore("/ignored/registry.json");
+    await store.register({ nullifier: NULLIFIER_A, wallet: WALLET_A });
+    const err = await store
+      .register({ nullifier: NULLIFIER_B, wallet: WALLET_A })
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(RegistryError);
+    expect(err.code).toBe("wallet-reused");
+    // The failed attempt claimed NULLIFIER_B but created no binding. It must
+    // be released so the identity can bind a free wallet instead of hitting
+    // a stuck worldid-reused forever.
+    const binding = await store.register({ nullifier: NULLIFIER_B, wallet: WALLET_B });
+    expect(binding.wallet).toBe(WALLET_B.toLowerCase());
   });
 
   it("lists every bound wallet in the allowlist", async () => {

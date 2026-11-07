@@ -12,6 +12,7 @@ export interface KvLike {
   hsetnx(key: string, field: string, value: string): Promise<number>;
   hget(key: string, field: string): Promise<string | null>;
   hkeys(key: string): Promise<string[]>;
+  hdel(key: string, ...fields: string[]): Promise<number>;
   // Delete key only when its value equals expected. Returns 1 when deleted.
   compareDel(key: string, expected: string): Promise<number>;
   // Sliding-window hit: prune entries older than now-windowMs, record now
@@ -50,6 +51,7 @@ interface RedisCommands {
   hsetnx(key: string, field: string, value: string): Promise<number>;
   hget(key: string, field: string): Promise<unknown>;
   hkeys(key: string): Promise<string[]>;
+  hdel(key: string, ...fields: string[]): Promise<number>;
   eval(script: string, keys: string[], args: (string | number)[]): Promise<unknown>;
 }
 
@@ -94,6 +96,9 @@ export function createRedisKv(client: RedisCommands): KvLike {
     },
     hkeys(key) {
       return client.hkeys(key);
+    },
+    hdel(key, ...fields) {
+      return client.hdel(key, ...fields);
     },
     async compareDel(key, expected) {
       return Number(await client.eval(COMPARE_DEL_SCRIPT, [key], [expected]));

@@ -1,7 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { desc, eq } from "@arkiv-network/sdk/query";
-import { key as keyVal } from "@arkiv-network/sdk/schema";
+import { desc } from "@arkiv-network/sdk/query";
 import type { Hex } from "viem";
 import { publicClient } from "./client";
 import { Comments, Posts } from "./schemas";
@@ -244,38 +243,32 @@ export async function countComments(parentKey: string, sponsor: Hex): Promise<nu
 
 // Single-post read for the thread view: same trust filters as the feed
 // (sponsor ownership + registered author + unexpired), plus the body.
+// Uses a direct entity read, not the query index, so a just-created post is
+// visible before the index catches up.
 export async function fetchPostDetail(
   entityKey: string,
   sponsor: Hex,
   allowlist: Set<string>,
 ): Promise<ThreadPostDetail | undefined> {
-  const timing = await publicClient.getBlockTiming();
-  const page = await publicClient
-    .select({
-      $key: true,
-      $owner: true,
-      $expiresAt: true,
-      author: true,
-      postKey: true,
-      title: true,
-      body: true,
-    })
-    .from(Posts)
-    .ownedBy(sponsor)
-    .where(eq("$key", keyVal(entityKey as Hex)))
-    .limit(1)
-    .fetch();
-  if (page.entities.length === 0) return undefined;
-  const r = page.entities[0] as Record<string, unknown>;
-  const author = colVal(r.author);
+  if (!/^0x[0-9a-fA-F]{64}$/.test(entityKey)) return undefined;
+  let e: Record<string, unknown>;
+  try {
+    e = (await publicClient.getEntity(entityKey as Hex, Posts)) as unknown as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+  const owner = colVal(e.$owner);
+  if (owner.toLowerCase() !== sponsor.toLowerCase()) return undefined;
+  const author = colVal(e.author);
   if (!allowlist.has(author.toLowerCase())) return undefined;
-  const expiresAtBlock = BigInt(String(r.$expiresAt));
+  const expiresAtBlock = BigInt(String(e.$expiresAt));
+  const timing = await publicClient.getBlockTiming();
   const expired = expiresAtBlock <= timing.currentBlock;
   if (expired) return undefined;
   return {
-    key: String(r.$key),
-    title: colVal(r.title),
-    body: decodeBodyCell(r.body),
+    key: String(e.$key),
+    title: colVal(e.title),
+    body: decodeBodyCell(e.body),
     owner: author,
     expiresAt: new Date(
       Date.now() + Number(expiresAtBlock - timing.currentBlock) * BLOCK_SECONDS * 1000,

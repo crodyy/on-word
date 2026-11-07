@@ -154,6 +154,10 @@ export function createKvRegistryStore(kv: KvLike): RegistryStore {
         JSON.stringify({ nullifier, wallet, createdAt: new Date().toISOString() }),
       );
       if (second === 0) {
+        // Compensate: we claimed the nullifier above but created no binding.
+        // Without this release the identity is locked out of every wallet
+        // afterwards (a stuck worldid-reused on retry).
+        await kv.hdel(KV_REGISTRY_NULLIFIERS, nullifier).catch(() => undefined);
         throw new RegistryError("wallet-reused", "this wallet is already bound");
       }
       const raw = await kv.hget(KV_REGISTRY_WALLETS, wallet);

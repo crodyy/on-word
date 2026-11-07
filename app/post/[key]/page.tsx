@@ -25,36 +25,64 @@ export default function ThreadPage() {
 
   useEffect(() => {
     setWallet(getBoundWallet());
-    fetch("/api/posts")
-      .then((r) => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const r = await fetch("/api/posts");
         if (!r.ok) throw new Error("feed failed");
-        return r.json() as Promise<FeedResponse>;
-      })
-      .then((d) => {
+        const d = (await r.json()) as FeedResponse;
+        if (cancelled) return;
         const found = d.posts.find((p) => p.key === key);
         if (found) {
           setPost(found);
           setTitle(found.title);
         } else if (d.archived.find((p) => p.key === key)) {
           setArchived(true);
+          return;
         } else {
-          setMissing(true);
+          // The feed query index can lag behind a just-created post. Confirm
+          // with a direct entity read before calling it missing.
+          const det = await fetch(`/api/posts/${encodeURIComponent(key)}`)
+            .then((x) => (x.ok ? x.json() : null))
+            .catch(() => null) as ThreadPost | null;
+          if (cancelled) return;
+          if (det) {
+            setDetail(det);
+            setBodyText(det.body);
+            setPost({
+              key: det.key,
+              title: det.title,
+              excerpt: det.body.slice(0, 180),
+              owner: det.owner,
+              expiresAt: det.expiresAt,
+              commentCount: 0,
+              expired: false,
+            });
+            setTitle(det.title);
+          } else {
+            setMissing(true);
+            return;
+          }
         }
-      })
-      .catch(() => setMissing(true));
-    fetch(`/api/comments?postKey=${encodeURIComponent(key)}`)
-      .then((r) => (r.ok ? r.json() : { comments: [] }))
-      .then((d: CommentsResponse) => setComments(d.comments))
-      .catch(() => undefined);
-    fetch(`/api/posts/${encodeURIComponent(key)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: ThreadPost | null) => {
-        if (d) {
+      } catch {
+        if (!cancelled) setMissing(true);
+        return;
+      }
+      fetch(`/api/comments?postKey=${encodeURIComponent(key)}`)
+        .then((r) => (r.ok ? r.json() : { comments: [] }))
+        .then((d: CommentsResponse) => { if (!cancelled) setComments(d.comments); })
+        .catch(() => undefined);
+      fetch(`/api/posts/${encodeURIComponent(key)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: ThreadPost | null) => {
+          if (cancelled || !d) return;
           setDetail(d);
           setBodyText((cur) => cur || d.body);
-        }
-      })
-      .catch(() => undefined);
+        })
+        .catch(() => undefined);
+    }
+    load();
+    return () => { cancelled = true; };
   }, [key]);
 
   const isOwner = !!wallet && !!post && wallet.toLowerCase() === post.owner.toLowerCase();

@@ -1,9 +1,9 @@
 # TIMELINE
 
-Last updated: 2026-11-07 01:10 IST
+Last updated: 2026-11-07 06:35 IST
 
 ## Summary
-Done: 22 | In progress: 0 | In review: 7 | Blocked: 0 | Todo: 1
+Done: 24 | In progress: 0 | In review: 8 | Blocked: 0 | Todo: 0
 
 ## Tasks
 | ID    | Task                              | Owner      | Depends on | Status | Acceptance (evidence)          | Updated |
@@ -38,6 +38,8 @@ Done: 22 | In progress: 0 | In review: 7 | Blocked: 0 | Todo: 1
 | T-028 | 1-hour post lifetime | Backend B + Frontend | T-008 | DONE | lib/arkiv/posts validates days 1/3/5 or hours 1 (fromHours), create/extend routes accept either, composer + thread extend offer 1h; vitest 62/62, tsc clean, build green; contract deviation vs PROMPT.md/AGENTS.md day-only lifetimes | 2026-11-07 |
 | T-029 | Feed body excerpts | Backend B + Frontend | T-009 | DONE | fetchLivePosts selects body, splitFeed exposes 180-char excerpt, cache v3 stores excerpts (old caches reset once), feed renders excerpt live+archived; vitest 64/64, tsc clean, build green | 2026-11-07 |
 | T-030 | Security re-audit + remove SECURITY.md | Security | T-016 | DONE | all findings re-verified against code (S-001/S-003 fixed, S-002 accepted, S-004 sweep clean), 32 auth tests green; file deleted per user direction | 2026-11-07 |
+| T-031 | KV-backed state (registry, nonces, rate limits, feed cache) | Backend A + B | T-003, T-021 | DONE | `vitest run` 75/75 (11 new kv-state tests), `tsc` clean, `npm run build` green; file backend kept for local dev, KV used when configured | 2026-11-07 |
+| T-032 | Brand rename Human-Only Forum to On-Word | Frontend + Orchestrator | - | DONE | PROMPT.md, README.md, layout title/footer, header aria/alt all On-Word; grep clean of old name in UI strings | 2026-11-07 |
 
 ## Milestones
 - [ ] M1 Registry + RP signature (T-003, T-005, T-016 partial)

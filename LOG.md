@@ -359,3 +359,18 @@
 - What: User performed the live round trip on a fresh identity and confirmed every step behaved as expected (signup, duplicate 409s, post, comment, extend, non-owner 403, 6th-post 429). No tx hashes captured; evidence is user confirmation plus the green automated half (vitest 64/64, build pass) logged at STARTED.
 - Evidence: user report "done" / "all good" on the 7-step checklist; suite + build output 2026-11-07.
 - Needs: nothing on T-018. Remaining IN_REVIEW items (T-006, T-008, T-011, T-013, T-014, T-026, T-027) are trackable follow-ups, not blockers.
+
+## 2026-11-07 01:25 IST | Frontend + Orchestrator | T-032 | DONE (backfilled)
+- What: Brand rename Human-Only Forum to On-Word (commit a358ff1). PROMPT.md one-liner, README.md title, app/layout.tsx title + footer, SiteHeader aria-label + logo alt. No logic changed.
+- Evidence: `git show a358ff1 --stat` (4 files, 6 insertions, 6 deletions); grep confirms On-Word in README/PROMPT/layout/SiteHeader.
+- Needs: none. TIMELINE row T-032 added 2026-11-07.
+
+## 2026-11-07 05:25 IST | Backend A + B | T-031 | DONE (backfilled)
+- What: KV-backed shared state for serverless (commit e01255a): new lib/store/kv.ts (KvLike seam, Vercel KV adapter, in-memory fake for tests), registry uses HSETNX check-and-insert, nonces use atomic compare-and-delete, rate limits use shared sliding window, feed cache uses one shared key with 30d TTL; file backends kept for local dev/tests. Adds @vercel/kv dep, .vercel gitignored.
+- Evidence: `git show --stat e01255a` (9 files, 539 insertions); `npm run test` 75/75 across 11 files (was 64/64, 11 new kv-state tests), `npm run typecheck` clean, `npm run build` green (verified 2026-11-07 06:35 IST).
+- Needs: Vercel KV env vars in deploy (KV_*); local dev unaffected (file fallback). Push approval per rule 10.
+
+## 2026-11-07 06:35 IST | Orchestrator | T-031, T-032 | DECISION
+- What: Board reconciled with the last session's two unlogged commits. TIMELINE.md now Done:24/In review:8/Todo:0 with new rows T-031 and T-032 (both DONE, evidence above). T-018 DONE/M8 checked from 3bc200e was already on the board, no new row. Old summary count corrected (was undercounting IN_REVIEW 7 vs 8 rows, Todo:1 vs 0 rows).
+- Evidence: test/build/typecheck output above; `git log` e01255a/a358ff1/3bc200e.
+- Needs: user approval to push TIMELINE.md + LOG.md.
